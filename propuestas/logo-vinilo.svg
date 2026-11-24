@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- El mismo dibujo del inicio de sesión: un disco de vinilo visto desde arriba -->
+  <circle cx="512" cy="512" r="512" fill="#bf3b50"/>   <!-- borde (sombra interior del 25 %) -->
+  <circle cx="512" cy="512" r="347" fill="#ff4e6a"/>   <!-- disco: color de acento de la app -->
+  <circle cx="512" cy="512" r="116" fill="#050505"/>   <!-- agujero del centro -->
+</svg>

@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <!-- PROPUESTA (no implementada): parlante blanco con driver amarillo, estilo Fluent (Windows 11). -->
+  <defs>
+    <!-- Gabinete blanco con un leve sombreado para que tenga volumen -->
+    <linearGradient id="cab" x1="0.15" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#ffffff" />
+      <stop offset="0.6" stop-color="#f1f1f4" />
+      <stop offset="1" stop-color="#d9d9e0" />
+    </linearGradient>
+    <!-- Canto del gabinete, un poco más oscuro para que se vea sobre fondo claro -->
+    <linearGradient id="edge" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e4e4ea" />
+      <stop offset="1" stop-color="#b9b9c4" />
+    </linearGradient>
+    <!-- Aro de goma (suspensión) del driver -->
+    <radialGradient id="surround" cx="0.45" cy="0.4" r="0.6">
+      <stop offset="0.7" stop-color="#f2b705" />
+      <stop offset="1" stop-color="#c98f00" />
+    </radialGradient>
+    <!-- Cono amarillo con luz arriba a la izquierda -->
+    <radialGradient id="cone" cx="0.38" cy="0.32" r="0.75">
+      <stop offset="0" stop-color="#ffe46b" />
+      <stop offset="0.55" stop-color="#ffcc1a" />
+      <stop offset="1" stop-color="#e8a800" />
+    </radialGradient>
+    <!-- Tapa central del cono -->
+    <radialGradient id="cap" cx="0.35" cy="0.3" r="0.8">
+      <stop offset="0" stop-color="#fff3b8" />
+      <stop offset="1" stop-color="#f5bf00" />
+    </radialGradient>
+    <filter id="ground" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="8" />
+    </filter>
+    <filter id="lift" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#5a4300" flood-opacity="0.35" />
+    </filter>
+  </defs>
+
+  <!-- Sombra suave en el piso -->
+  <ellipse cx="128" cy="236" rx="64" ry="9" fill="#14141c" opacity="0.35" filter="url(#ground)" />
+
+  <!-- Gabinete: canto y frente -->
+  <rect x="62" y="14" width="132" height="216" rx="30" fill="url(#edge)" />
+  <rect x="62" y="12" width="132" height="210" rx="30" fill="url(#cab)" />
+
+  <!-- Tweeter (driver chico de arriba) -->
+  <g filter="url(#lift)">
+    <circle cx="128" cy="58" r="20" fill="url(#surround)" />
+    <circle cx="128" cy="58" r="14" fill="url(#cone)" />
+  </g>
+  <circle cx="128" cy="58" r="6" fill="url(#cap)" />
+
+  <!-- Woofer (driver grande): aro, cono y tapa, en capas -->
+  <g filter="url(#lift)">
+    <circle cx="128" cy="148" r="52" fill="url(#surround)" />
+    <circle cx="128" cy="148" r="42" fill="url(#cone)" />
+  </g>
+  <circle cx="128" cy="148" r="16" fill="url(#cap)" />
+  <!-- Brillo suave sobre el cono -->
+  <ellipse cx="113" cy="131" rx="16" ry="9" fill="#ffffff" opacity="0.28" transform="rotate(-35 113 131)" />
+</svg>

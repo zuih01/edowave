@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="1000" height="1000">
+  <defs>
+    <filter id="sombra" filterUnits="userSpaceOnUse" x="0" y="0" width="1000" height="1000">
+      <feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#5a2a00" flood-opacity="0.4"/>
+    </filter>
+    <filter id="sombraTexto" filterUnits="userSpaceOnUse" x="0" y="0" width="1000" height="1000">
+      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#4a0010" flood-opacity="0.5"/>
+    </filter>
+    <clipPath id="rojo"><rect x="62" y="330" width="876" height="590"/></clipPath>
+  </defs>
+
+  <!-- Fondo y marco -->
+  <rect width="1000" height="1000" fill="#f5b52a"/>
+  <rect x="40" y="40" width="920" height="920" rx="26" fill="none" stroke="#1a1a1a" stroke-width="6"/>
+
+  <!-- Encabezado: palabra grande a la izquierda, texto chico a la derecha -->
+  <text x="70" y="262" font-family="'Arial Rounded MT Bold', 'Segoe UI', Arial, sans-serif" font-size="190" font-weight="900" letter-spacing="-6" fill="#1a1a1a">Éxitos</text>
+  <g font-family="'Segoe UI', Arial, sans-serif" font-size="30" font-weight="600" fill="#1a1a1a">
+    <text x="640" y="150">Lo mejor de</text>
+    <text x="640" y="188">una década</text>
+    <text x="640" y="226">que no se olvida</text>
+  </g>
+  <rect x="40" y="294" width="920" height="10" fill="#1a1a1a"/>
+
+  <!-- Bloque rojo con franja azul -->
+  <g filter="url(#sombra)"><rect x="62" y="330" width="876" height="590" fill="#e5302a"/></g>
+  <g clip-path="url(#rojo)">
+    <polygon points="815,330 938,330 938,352 752,545 690,545" fill="#1f3ea6"/>
+  </g>
+
+  <!-- 80's -->
+  <g filter="url(#sombraTexto)" fill="#f4ecdc">
+    <text x="88" y="868" textLength="600" lengthAdjust="spacingAndGlyphs" font-family="'Arial Rounded MT Bold', 'Segoe UI', Arial, sans-serif" font-size="600" font-weight="900">80</text>
+    <polygon points="712,402 772,402 738,520 700,520"/>
+    <text x="728" y="868" textLength="195" lengthAdjust="spacingAndGlyphs" font-family="'Arial Rounded MT Bold', 'Segoe UI', Arial, sans-serif" font-size="600" font-weight="900">s</text>
+  </g>
+</svg>

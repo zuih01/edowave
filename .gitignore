@@ -1,0 +1,41 @@
+node_modules
+dist
+dist-*
+*.log
+tsconfig.tsbuildinfo
+
+# Certificados y claves (la clave privada NUNCA se comparte)
+certs/
+*.key
+*.pem
+*.pfx
+*.p12
+*.jks
+*.keystore
+*.sig
+.env
+.env.*
+!.env.example
+
+# Compilados, instaladores y respaldos (no son código)
+apk/
+pc/
+backups/
+target/
+android/build/
+android/app/build/
+android/.gradle/
+android/local.properties
+android/app/src/main/assets/public/
+*.apk
+*.exe
+*.zip
+*.tar.gz
+
+# Notas privadas y datos personales
+.claude/
+CLAUDE.md
+RESUMEN-EDOWAVE.md
+infinita-100.1.txt
+herramientas/comparar-musica/faltan-*.txt
+analisis-flanger/

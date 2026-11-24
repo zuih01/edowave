@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <!-- Abierta sin candado (http://) en internet: se pasa sola a https (en casa y en la PC no se toca). -->
+    <script>
+      if (location.protocol === 'http:' && !/^(localhost|127\.|\[::1\]|192\.168\.|10\.)/.test(location.hostname))
+        location.replace('https://' + location.host + location.pathname + location.search);
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#0f0f0f" />
+    <title>Edowave</title>
+    <link rel="icon" type="image/svg+xml" href="/icon.svg?v=5" />
+    <!-- iPhone: ícono de la pantalla de inicio (PNG, sin transparencia) y modo app a pantalla completa -->
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Edowave" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

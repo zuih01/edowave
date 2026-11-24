@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Edowave</string>
+    <string name="title_activity_main">Edowave</string>
+    <string name="package_name">io.empanados.musica</string>
+    <string name="custom_url_scheme">io.empanados.musica</string>
+</resources>

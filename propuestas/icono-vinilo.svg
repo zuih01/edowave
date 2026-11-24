@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <!-- PROPUESTA (no implementada): disco de vinilo dentro de un cuadrado redondeado, estilo Fluent (Windows 11). -->
+  <defs>
+    <!-- Cuadrado: rosa de la app que pasa a morado, degradado suave -->
+    <linearGradient id="tile" x1="0.1" y1="0" x2="0.9" y2="1">
+      <stop offset="0" stop-color="#ff7d95" />
+      <stop offset="0.55" stop-color="#f0457a" />
+      <stop offset="1" stop-color="#9b3fe0" />
+    </linearGradient>
+    <!-- Brillo suave arriba del cuadrado -->
+    <linearGradient id="tileShine" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.28" />
+      <stop offset="0.5" stop-color="#ffffff" stop-opacity="0" />
+    </linearGradient>
+    <!-- Disco negro con un poco de volumen -->
+    <radialGradient id="disc" cx="0.4" cy="0.35" r="0.75">
+      <stop offset="0" stop-color="#3a3a42" />
+      <stop offset="0.6" stop-color="#1c1c22" />
+      <stop offset="1" stop-color="#0d0d11" />
+    </radialGradient>
+    <!-- Reflejo de luz sobre el disco -->
+    <linearGradient id="gleam" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.32" />
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0" />
+    </linearGradient>
+    <!-- Etiqueta del centro -->
+    <linearGradient id="label" x1="0.2" y1="0.1" x2="0.8" y2="1">
+      <stop offset="0" stop-color="#ffd2dc" />
+      <stop offset="1" stop-color="#ff6f8c" />
+    </linearGradient>
+    <clipPath id="discClip">
+      <circle cx="128" cy="122" r="76" />
+    </clipPath>
+    <filter id="ground" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="9" />
+    </filter>
+    <filter id="lift" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="6" stdDeviation="7" flood-color="#3b0726" flood-opacity="0.45" />
+    </filter>
+  </defs>
+
+  <!-- Sombra suave en el piso -->
+  <ellipse cx="128" cy="230" rx="86" ry="11" fill="#2a0718" opacity="0.32" filter="url(#ground)" />
+
+  <!-- Cuadrado redondeado -->
+  <rect x="26" y="20" width="204" height="204" rx="52" fill="url(#tile)" />
+  <rect x="26" y="20" width="204" height="204" rx="52" fill="url(#tileShine)" />
+
+  <!-- Disco (capa encima, con sombra sobre el cuadrado) -->
+  <g filter="url(#lift)">
+    <circle cx="128" cy="122" r="76" fill="url(#disc)" />
+  </g>
+  <!-- Dos surcos anchos (sin detalles pequeños, para que se lea bien en chico) -->
+  <circle cx="128" cy="122" r="60" fill="none" stroke="#ffffff" stroke-opacity="0.09" stroke-width="3" />
+  <circle cx="128" cy="122" r="46" fill="none" stroke="#ffffff" stroke-opacity="0.09" stroke-width="3" />
+  <!-- Reflejo en cuña, recortado al disco -->
+  <g clip-path="url(#discClip)">
+    <path d="M128 122 L60 40 A110 110 0 0 1 120 14 Z" fill="url(#gleam)" />
+    <path d="M128 122 L196 204 A110 110 0 0 1 136 230 Z" fill="#ffffff" opacity="0.07" />
+  </g>
+
+  <!-- Etiqueta y agujero -->
+  <circle cx="128" cy="122" r="28" fill="url(#label)" />
+  <circle cx="128" cy="122" r="6" fill="#2a1020" opacity="0.85" />
+</svg>

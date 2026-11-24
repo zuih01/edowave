@@ -1,0 +1,12 @@
+[Unit]
+Description=Túnel SSH del almacén wifi hacia el VPS (el VPS ve el almacén en su 127.0.0.1:9107)
+After=network-online.target reproductor-almacen.service
+
+[Service]
+# La llave ~/.ssh/tunel_vps en el VPS solo permite abrir este túnel (restrict, permitlisten, sin terminal).
+ExecStart=/usr/bin/ssh -N -i %h/.ssh/tunel_vps -o IdentitiesOnly=yes -o BatchMode=yes -o ExitOnForwardFailure=yes -o ServerAliveInterval=20 -o ServerAliveCountMax=3 -R 127.0.0.1:9107:127.0.0.1:9107 zuih@empanados.io
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=default.target

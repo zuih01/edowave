@@ -1,0 +1,14 @@
+[Unit]
+Description=Servidor de música del reproductor
+Requires=reproductor-db.service
+After=reproductor-db.service network-online.target
+
+[Service]
+WorkingDirectory=%h/reproductor/app
+ExecStart=/usr/bin/node src/main.js
+Restart=always
+RestartSec=3
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=default.target

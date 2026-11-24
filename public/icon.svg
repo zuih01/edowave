@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- PROPUESTA "CD" en estilo GNOME (HIG app icons): lienzo 128, cuadrícula de 2 px, canto inferior de 4 px más
+       oscuro, luz desde arriba, colores de la paleta GNOME, sin sombra por fuera de la silueta. -->
+  <defs>
+    <!-- Cara superior plateada (superficie del disco) -->
+    <radialGradient id="cara" cx="0.5" cy="0.35" r="0.75">
+      <stop offset="0" stop-color="#ffffff" />
+      <stop offset="0.6" stop-color="#f6f5f4" />
+      <stop offset="1" stop-color="#deddda" />
+    </radialGradient>
+    <!-- Canto (grosor) -->
+    <linearGradient id="canto" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#9a9996" />
+      <stop offset="0.5" stop-color="#c0bfbc" />
+      <stop offset="1" stop-color="#9a9996" />
+    </linearGradient>
+    <filter id="suave" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.5" /></filter>
+    <!-- Disco con agujero central -->
+    <mask id="hueco" maskUnits="userSpaceOnUse" x="0" y="0" width="128" height="128">
+      <rect width="128" height="128" fill="#fff" />
+      <circle cx="64" cy="60" r="7" fill="#000" />
+    </mask>
+    <clipPath id="disco"><circle cx="64" cy="60" r="52" /></clipPath>
+  </defs>
+
+  <g mask="url(#hueco)">
+    <!-- Canto inferior de 4 px -->
+    <circle cx="64" cy="64" r="52" fill="url(#canto)" />
+    <!-- Cara superior -->
+    <circle cx="64" cy="60" r="52" fill="url(#cara)" />
+    <!-- Reflejos tornasol (el brillo de arcoíris del CD), en cuñas opuestas -->
+    <g clip-path="url(#disco)" filter="url(#suave)" opacity="0.75">
+      <path d="M64 60 L10 30 A60 60 0 0 1 34 10 Z" fill="#99c1f1" />
+      <path d="M64 60 L34 10 A60 60 0 0 1 64 2 Z" fill="#dc8add" />
+      <path d="M64 60 L10 30 A60 60 0 0 0 4 52 Z" fill="#8ff0a4" />
+      <path d="M64 60 L118 90 A60 60 0 0 1 94 110 Z" fill="#f9f06b" />
+      <path d="M64 60 L94 110 A60 60 0 0 1 64 118 Z" fill="#ffbe6f" />
+      <path d="M64 60 L118 90 A60 60 0 0 0 124 68 Z" fill="#99c1f1" />
+    </g>
+    <!-- Zona transparente del centro (plástico) y su aro -->
+    <circle cx="64" cy="60" r="20" fill="#deddda" />
+    <circle cx="64" cy="60" r="18" fill="#f6f5f4" />
+    <circle cx="64" cy="60" r="12" fill="none" stroke="#c0bfbc" stroke-width="2" />
+  </g>
+  <!-- Pared del agujero (se ve la de atrás, más oscura) -->
+  <path d="M57 60 A7 7 0 0 1 71 60 L71 62 A7 7 0 0 0 57 62 Z" fill="#9a9996" />
+</svg>

@@ -1,0 +1,21 @@
+[package]
+name = "instalar-musica"
+version = "0.9.0-beta.68"
+description = "Instalador de Edowave para PC"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+mslnk = "0.1"
+winreg = "0.55"
+dirs = "6"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true

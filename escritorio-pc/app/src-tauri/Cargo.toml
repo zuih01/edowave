@@ -1,0 +1,27 @@
+[package]
+name = "musica"
+version = "0.9.0-beta.80"
+description = "Edowave: reproductor para PC"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-window-state = "2"
+tauri-plugin-single-instance = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+ureq = "3"
+semver = "1"
+tauri-plugin-opener = "2"
+
+# Compilación estándar (24-11-2026): sin achicar ni quitar símbolos. Un .exe muy comprimido y sin símbolos se
+# parece más a malware ofuscado para la IA de Windows Defender (detección Bearfoos.A!ml). Pesa un poco más.
+[profile.release]
+codegen-units = 1
+lto = false
+opt-level = 3
+panic = "abort"
+strip = false

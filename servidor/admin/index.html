@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>Panel de música</title>
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+  <!-- Primera vez: crear la cuenta de administrador -->
+  <section id="v-crear" class="entrada" hidden>
+    <form class="tarjeta" id="f-crear">
+      <h1>Crear cuenta de administrador</h1>
+      <p class="sub">Es la primera vez que abres el panel. Esta cuenta solo sirve para subir música y manejar usuarios; para escuchar usarás otra.</p>
+      <label>Usuario <input name="nombre" autocomplete="username" required minlength="3" maxlength="24" /></label>
+      <label>Contraseña <input name="clave" type="password" autocomplete="new-password" required minlength="8" /></label>
+      <label>Repite la contraseña <input name="clave2" type="password" autocomplete="new-password" required minlength="8" /></label>
+      <p class="error" role="alert"></p>
+      <button class="primario">Crear y entrar</button>
+    </form>
+  </section>
+
+  <!-- Entrar -->
+  <section id="v-entrar" class="entrada" hidden>
+    <form class="tarjeta" id="f-entrar">
+      <h1>Panel de música</h1>
+      <p class="sub">Entra con la cuenta de administrador.</p>
+      <label>Usuario <input name="nombre" autocomplete="username" required /></label>
+      <label>Contraseña <input name="clave" type="password" autocomplete="current-password" required /></label>
+      <p class="error" role="alert"></p>
+      <button class="primario">Entrar</button>
+    </form>
+  </section>
+
+  <!-- Panel -->
+  <section id="v-panel" hidden>
+    <header class="barra">
+      <div class="marca"><span class="logo" aria-hidden="true"></span>Panel de música</div>
+      <nav class="pestanas" role="tablist">
+        <button role="tab" data-tab="musica" aria-selected="true">Música</button>
+        <button role="tab" data-tab="invitaciones">Invitaciones</button>
+        <button role="tab" data-tab="usuarios">Usuarios</button>
+        <button role="tab" data-tab="estadisticas">Estadísticas</button>
+        <button role="tab" data-tab="reportes">Reportes <span class="contador-tab" id="rep-contador" hidden></span></button>
+        <button role="tab" data-tab="sugerencias">Sugerencias <span class="contador-tab" id="sug-contador" hidden></span></button>
+        <button role="tab" data-tab="categorias">Categorías <span class="contador-tab" id="cat-contador" hidden></span></button>
+        <button role="tab" data-tab="artistas">Artistas <span class="contador-tab" id="art-contador" hidden></span></button>
+      </nav>
+      <div class="cuenta">
+        <span id="yo"></span>
+        <button class="ajustes-btn" id="ajustes" aria-label="Ajustes" title="Ajustes" hidden>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19.4 13a7.5 7.5 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3.3h-4l-.4 2.6a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.5 7.5 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1c.5.4 1.1.7 1.7 1l.4 2.6h4l.4-2.6c.6-.3 1.2-.6 1.7-1l2.5 1 2-3.5zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" transform="translate(-1 0)"/></svg>
+        </button>
+        <button class="link" id="salir">Salir</button>
+      </div>
+    </header>
+
+    <main>
+      <!-- Música -->
+      <div data-panel="musica">
+        <label class="soltar" id="soltar">
+          <input type="file" id="archivos" accept="audio/*,.mp3,.m4a,.aac,.flac,.wav,.aiff,.ogg,.opus,.wma,.ape,.wv,.mka" multiple hidden />
+          <strong>Arrastra aquí tu música</strong>
+          <span>o haz clic para elegirlos · MP3, M4A y FLAC se guardan tal cual; WAV pasa a FLAC sin pérdida; WMA, OGG y otros a MP3 320</span>
+        </label>
+
+        <div id="subidas" class="subidas" hidden>
+          <div class="subidas-cab"><span id="subidas-resumen"></span><button class="link" id="subidas-limpiar">Ocultar</button></div>
+          <ul id="subidas-lista"></ul>
+        </div>
+
+        <div class="lista-cab">
+          <h2>Biblioteca del servidor <span class="cuenta-num" id="total"></span> <span class="cuenta-num libre" id="libre"></span> <span class="cuenta-num libre" id="wifi"></span></h2>
+          <input type="search" id="buscar" placeholder="Buscar por título, artista o álbum" />
+        </div>
+        <div class="tabla-wrap">
+          <table class="tabla" id="tabla">
+            <thead>
+              <tr><th></th><th>Título</th><th>Artista</th><th>Álbum</th><th class="num">Año</th><th class="num">Duración</th><th>Géneros</th><th>Análisis</th><th></th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <p class="meta mas-canciones" id="mas-canciones" hidden></p>
+          <p class="vacio" id="vacio" hidden>Todavía no hay canciones. Arrastra tu música arriba.</p>
+        </div>
+      </div>
+
+      <!-- Invitaciones -->
+      <div data-panel="invitaciones" hidden>
+        <form class="fila-form" id="f-invitar">
+          <input name="nota" placeholder="Para quién es (opcional)" maxlength="60" />
+          <select name="dias">
+            <option value="1">Vence en 1 día</option>
+            <option value="7" selected>Vence en 7 días</option>
+            <option value="30">Vence en 30 días</option>
+          </select>
+          <button class="primario">Crear invitación</button>
+        </form>
+        <p class="ayuda">Cada código sirve para crear <b>una</b> cuenta en la app. Compártelo solo con esa persona.</p>
+        <ul class="tarjetas" id="invitaciones"></ul>
+      </div>
+
+      <!-- Usuarios -->
+      <div data-panel="usuarios" hidden>
+        <div class="us-cab">
+          <h2>Usuarios <span class="cuenta-num" id="us-total"></span></h2>
+          <div class="us-controles">
+            <input type="search" id="us-buscar" placeholder="Buscar por nombre" aria-label="Buscar usuario" />
+            <select id="us-orden" aria-label="Ordenar">
+              <option value="recientes">Unión: más recientes</option>
+              <option value="antiguos">Unión: más antiguos</option>
+              <option value="actividad">Última actividad</option>
+              <option value="nombre">Nombre (A–Z)</option>
+              <option value="escuchas">Más escuchas</option>
+            </select>
+          </div>
+        </div>
+        <div class="us-filtros" role="group" aria-label="Mostrar">
+          <button data-filtro="todos" aria-pressed="true">Todos <span id="us-n-todos"></span></button>
+          <button data-filtro="conectados" aria-pressed="false"><i class="us-punto on" aria-hidden="true"></i> Conectados <span id="us-n-conectados"></span></button>
+          <button data-filtro="desconectados" aria-pressed="false">Desconectados <span id="us-n-desconectados"></span></button>
+        </div>
+        <ul class="tarjetas us-lista" id="usuarios"></ul>
+      </div>
+
+      <!-- Sugerencias: canciones que piden los usuarios -->
+      <!-- Estadísticas (números agrupados: nunca qué escuchó cada persona) -->
+      <div data-panel="estadisticas" hidden>
+        <div class="est-cab">
+          <h2>Estadísticas</h2>
+          <div class="est-periodo" role="group" aria-label="Período">
+            <button data-dias="7" aria-pressed="true">7 días</button>
+            <button data-dias="30">30 días</button>
+            <button data-dias="90">90 días</button>
+            <button data-dias="0">Todo</button>
+          </div>
+        </div>
+        <div id="est-cuerpo"><p class="vacio">Cargando…</p></div>
+      </div>
+
+      <!-- Reportes: canciones que alguien marcó como malas, con su comentario -->
+      <div data-panel="reportes" hidden>
+        <p class="vacio" id="rep-vacio" hidden>Nadie ha reportado canciones.</p>
+        <ul class="tarjetas" id="reportes"></ul>
+      </div>
+
+      <div data-panel="sugerencias" hidden>
+        <p class="vacio" id="sug-vacio" hidden>Nadie ha sugerido canciones todavía.</p>
+        <ul class="tarjetas" id="sugerencias"></ul>
+        <h3 class="sub-faltantes" id="falt-titulo" hidden>Esperadas por playlists de Spotify</h3>
+        <p class="vacio" id="falt-ayuda" hidden>Faltan en playlists importadas. Al subirlas se agregan solas a esas playlists.</p>
+        <ul class="tarjetas" id="faltantes"></ul>
+      </div>
+
+      <!-- Categorías: sugerencias automáticas de meme / anime / OST de videojuego para aceptar o rechazar -->
+      <div data-panel="categorias" hidden>
+        <p class="info cat-ayuda">
+          El servidor sugiere canciones que podrían ser <b>meme</b>, <b>anime</b> u <b>OST de videojuego</b> (por sus géneros,
+          palabras del título o álbum, la playlist Anime Now, o el mismo artista/álbum que otra ya marcada). Nada se aplica
+          solo: acepta o rechaza. Una canción con categoría solo suena en la radio después de otra de la misma categoría.
+          También puedes marcarlas a mano en el editor de cada canción.
+        </p>
+        <p class="vacio" id="cat-vacio" hidden>No hay sugerencias pendientes.</p>
+        <div id="cat-grupos"></div>
+      </div>
+
+      <!-- Artistas: colaboraciones ("A & B" → "A – canción (con B)") y el mismo nombre escrito distinto -->
+      <div data-panel="artistas" hidden>
+        <h2>Colaboraciones <span class="cuenta-num" id="art-colab-n"></span></h2>
+        <p class="info cat-ayuda">
+          Canciones con dos o más artistas juntos. <b>Separar</b> deja al primero como artista y los demás pasan al título
+          como <i>"(con …)"</i>: así el buscador no muestra al mismo artista y sus álbumes repetidos. Si en realidad es un
+          <b>grupo o dúo</b> (Daryl Hall &amp; John Oates, Wisin &amp; Yandel), marca <b>Es un grupo</b> y no se vuelve a sugerir.
+          Lo que decidas se aplica también a las canciones que se suban después.
+        </p>
+        <p class="vacio" id="art-colab-vacio" hidden>No hay colaboraciones por revisar.</p>
+        <div class="art-todas" id="art-colab-todas"></div>
+        <ul class="tarjetas" id="art-colab"></ul>
+        <h2>Mismo artista escrito distinto <span class="cuenta-num" id="art-nombres-n"></span></h2>
+        <p class="info cat-ayuda">Nombres que solo cambian en tildes o mayúsculas. <b>Unificar</b> los deja todos con el nombre elegido.</p>
+        <p class="vacio" id="art-nombres-vacio" hidden>No hay nombres por unificar.</p>
+        <ul class="tarjetas" id="art-nombres"></ul>
+      </div>
+    </main>
+  </section>
+
+  <!-- Editar canción -->
+  <dialog id="d-editar">
+    <form method="dialog" id="f-editar">
+      <h3>Editar canción</h3>
+      <div class="ed-portada" id="ed-portada" title="Suelta o pega (Ctrl+V) una imagen aquí">
+        <div class="ed-portada-img" id="ed-portada-img"></div>
+        <div class="ed-portada-ops">
+          <button type="button" class="link" id="ed-portada-elegir">Cambiar carátula</button>
+          <span class="info">o suéltala / pégala (Ctrl+V) aquí</span>
+          <label class="check" id="ed-portada-album-l"><input type="checkbox" id="ed-portada-album" /> Aplicar a todo el álbum</label>
+          <input type="file" id="ed-portada-archivo" accept="image/jpeg,image/png,image/webp" hidden />
+        </div>
+      </div>
+      <label>Título <input name="titulo" required /></label>
+      <label>Artista <input name="artista" required /></label>
+      <label>Álbum <input name="album" /></label>
+      <label>Artista del álbum <input name="artistaAlbum" /></label>
+      <div class="dos">
+        <label>Año <input name="anio" inputmode="numeric" /></label>
+        <label>Géneros <input name="generos" placeholder="pop, k-pop" /></label>
+      </div>
+      <fieldset class="ed-categorias">
+        <legend>Categoría especial <span class="info">(solo suena en la radio junto a otras de la misma)</span></legend>
+        <label class="check"><input type="checkbox" name="cat" value="meme" /> Meme</label>
+        <label class="check"><input type="checkbox" name="cat" value="anime" /> Anime</label>
+        <label class="check"><input type="checkbox" name="cat" value="ost-videojuego" /> OST de videojuego</label>
+      </fieldset>
+      <p class="info" id="editar-info"></p>
+      <p class="error" role="alert"></p>
+      <div class="botones">
+        <button value="cancelar" formnovalidate>Cancelar</button>
+        <button value="guardar" class="primario">Guardar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Restablecer contraseña -->
+  <!-- Detalle de un usuario (al tocarlo en la lista) -->
+  <dialog id="d-usuario">
+    <div class="du-cab">
+      <div>
+        <h3 id="du-nombre"></h3>
+        <div class="meta" id="du-estado"></div>
+      </div>
+      <button class="link" data-accion="cerrar-dialogo" aria-label="Cerrar">✕</button>
+    </div>
+    <div class="du-datos" id="du-datos"></div>
+    <h4>Aparatos con sesión abierta</h4>
+    <ul class="sesiones" id="du-sesiones"></ul>
+    <div class="botones" id="du-acciones">
+      <button data-accion="panel" id="du-panel">Dar acceso al panel</button>
+      <button data-accion="clave">Restablecer contraseña</button>
+      <button class="peligro-suave" data-accion="borrar">Borrar cuenta</button>
+    </div>
+  </dialog>
+
+  <dialog id="d-clave">
+    <form method="dialog" id="f-clave">
+      <h3 id="clave-titulo">Restablecer contraseña</h3>
+      <p class="info">Se genera un enlace para que la persona ponga su propia contraseña. Sirve una sola vez y vence en 24 horas. Al usarlo se cierran sus sesiones en todos sus aparatos.</p>
+      <div id="clave-enlace" hidden>
+        <label
+          >Enlace para mandarle
+          <span class="clave-fila">
+            <input name="enlace" type="text" readonly spellcheck="false" />
+            <button type="button" id="clave-copiar">Copiar</button>
+            <button type="button" id="clave-compartir" hidden>Compartir</button>
+          </span>
+        </label>
+        <p class="info" id="clave-vence"></p>
+      </div>
+      <p class="error" role="alert"></p>
+      <div class="botones">
+        <button value="cancelar" formnovalidate id="clave-cerrar">Cancelar</button>
+        <button value="generar" class="primario" id="clave-generar">Generar enlace</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Ajustes (solo la cuenta de admin "zuih"): aquí va lo peligroso, lejos de la lista -->
+  <dialog id="d-ajustes">
+    <form method="dialog">
+      <h3>Ajustes</h3>
+      <div class="zona-peligro">
+        <div>
+          <b>Borrar todas las canciones</b>
+          <p class="nota">Borra la música subida, sus carátulas y análisis, y las saca de los "me gusta" y playlists de todos. No se puede deshacer.</p>
+        </div>
+        <button type="button" class="peligro-suave" id="borrar-todo" disabled>Borrar todas</button>
+      </div>
+      <div class="acciones"><button value="cerrar">Cerrar</button></div>
+    </form>
+  </dialog>
+
+  <!-- Borrar todas las canciones -->
+  <dialog id="d-borrar-todo">
+    <form method="dialog" id="f-borrar-todo">
+      <h3 id="borrar-todo-titulo">¿Borrar todas las canciones?</h3>
+      <p>Se borran del servidor todos los archivos, portadas y datos, y desaparecen de los "me gusta" y playlists de todos los usuarios. <b>No se puede deshacer.</b></p>
+      <label>Para confirmar, escribe <b>BORRAR</b> <input name="confirmar" autocomplete="off" autocapitalize="characters" spellcheck="false" /></label>
+      <p class="error" role="alert"></p>
+      <div class="botones">
+        <button value="cancelar" formnovalidate>Cancelar</button>
+        <button value="borrar" class="peligro" id="borrar-todo-si" disabled>Borrar todas</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Confirmar -->
+  <dialog id="d-confirmar">
+    <form method="dialog">
+      <h3 id="confirmar-titulo"></h3>
+      <p id="confirmar-texto"></p>
+      <div class="botones">
+        <button value="no">Cancelar</button>
+        <button value="si" class="peligro" id="confirmar-si">Borrar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="aviso" id="aviso" role="status" hidden></div>
+  <script src="admin.js" type="module"></script>
+</body>
+</html>

@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0f0f0f" />
+    <title>Instalar Edowave en el iPhone</title>
+    <link rel="icon" type="image/svg+xml" href="/icon.svg?v=5" />
+    <style>
+      :root { color-scheme: dark; --accent: #ff4e6a; --text-2: #aaa; }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: radial-gradient(120% 40% at 30% 0%, #1b2a4a 0%, #0b1020 45%, #030303 80%) fixed, #030303;
+        color: #fff;
+        font-family: Roboto, 'Segoe UI', system-ui, -apple-system, sans-serif;
+        -webkit-text-size-adjust: 100%;
+        padding: calc(24px + env(safe-area-inset-top)) 18px calc(32px + env(safe-area-inset-bottom));
+        max-width: 520px;
+        margin: 0 auto;
+      }
+      header { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+      header img { width: 64px; height: 64px; }
+      h1 { font-size: 24px; margin: 0; }
+      header p { margin: 4px 0 0; color: var(--text-2); font-size: 14px; }
+      ol { list-style: none; padding: 0; margin: 0; counter-reset: paso; }
+      li {
+        counter-increment: paso;
+        background: #15181d;
+        border: 1px solid #262b33;
+        border-radius: 14px;
+        padding: 14px 16px 16px 56px;
+        margin-bottom: 12px;
+        position: relative;
+        line-height: 1.45;
+        font-size: 15px;
+      }
+      li::before {
+        content: counter(paso);
+        position: absolute;
+        left: 14px;
+        top: 14px;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--accent);
+        color: #fff;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      li b.t { display: block; font-size: 16px; margin-bottom: 4px; }
+      .ruta { color: #ffd0d8; }
+      .muted { color: var(--text-2); font-size: 13px; }
+      a.btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 10px;
+        padding: 11px 18px;
+        border-radius: 22px;
+        background: #fff;
+        color: #000;
+        font-weight: 700;
+        text-decoration: none;
+      }
+      a.btn.alt { background: var(--accent); color: #fff; }
+      code { background: #222; padding: 1px 6px; border-radius: 6px; }
+      .aviso { margin-top: 18px; padding: 12px 14px; border-radius: 12px; background: #2a1f12; border: 1px solid #4a3418; color: #ffd9a8; font-size: 13px; line-height: 1.45; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <img src="/icons/icon-192.png" alt="" />
+      <div>
+        <h1>Instalar Edowave</h1>
+        <p>En tu iPhone, usando solo el Wi-Fi de casa. Se hace una sola vez.</p>
+      </div>
+    </header>
+
+    <ol>
+      <li>
+        <b class="t">Descarga el certificado de tu computadora</b>
+        Abre esta página en <b>Safari</b> (no en otro navegador) y toca el botón. Safari dirá que se descargó un perfil.
+        <br /><a class="btn" href="/instalar/certificado.crt">Descargar certificado</a>
+      </li>
+      <li>
+        <b class="t">Instala el perfil</b>
+        Ve a <span class="ruta">Ajustes → General → VPN y gestión de dispositivos</span>, toca
+        <b>"Musica - certificado local"</b> y luego <b>Instalar</b>.
+      </li>
+      <li>
+        <b class="t">Confía en el certificado</b>
+        Ve a <span class="ruta">Ajustes → General → Información → Ajustes de confianza de certificados</span> y
+        <b>activa</b> el interruptor de "Musica - certificado local".
+        <div class="muted">Solo sirve para tu red de casa (direcciones 192.168…, 10…, localhost): no puede usarse para ninguna página de internet.</div>
+      </li>
+      <li>
+        <b class="t">Abre la app segura</b>
+        Toca el botón; se abre la app en Safari (ya con candado, sin avisos).
+        <br /><a class="btn alt" id="abrir" href="#">Abrir Edowave</a>
+      </li>
+      <li>
+        <b class="t">Agrégala a la pantalla de inicio</b>
+        En Safari toca <b>Compartir</b> (el cuadrado con la flecha) → <b>Agregar a pantalla de inicio</b> → <b>Agregar</b>.
+      </li>
+      <li>
+        <b class="t">Ábrela una vez con el Wi-Fi</b>
+        Abre la app desde su ícono mientras sigues en el Wi-Fi de casa, para que termine de guardarse completa.
+        Desde ahí <b>funciona sin internet y sin la computadora</b>. Importa tus MP3 con el botón <b>Archivos</b>.
+      </li>
+    </ol>
+
+    <div class="aviso">
+      Para recibir mejoras de la app más adelante: conecta el iPhone al mismo Wi-Fi con la computadora encendida
+      (<code>npm run iphone</code>) y abre la app; se actualiza sola. Tu música y tus ajustes se conservan.
+    </div>
+
+    <script>
+      // La dirección segura de la app es la misma computadora, por https en el puerto 4443.
+      document.getElementById('abrir').href = 'https://' + location.hostname + ':4443/';
+    </script>
+  </body>
+</html>

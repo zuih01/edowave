@@ -1,0 +1,21 @@
+{
+  "appId": "io.empanados.musica",
+  "appName": "Edowave",
+  "webDir": "dist-android",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "backgroundColor": "#000000",
+    "allowMixedContent": false,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false
+  },
+  "plugins": {
+    "StatusBar": {
+      "backgroundColor": "#000000",
+      "style": "DARK",
+      "overlaysWebView": false
+    }
+  }
+}

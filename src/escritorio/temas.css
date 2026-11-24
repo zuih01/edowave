@@ -1,0 +1,336 @@
+/* ================= Temas (PC y web del teléfono / iPhone) =================
+   El tema Clásico no tiene reglas: es el diseño de siempre (styles.css y escritorio.css).
+   Cada tema se activa con <html data-tema="…"> (ver temas.ts) y solo define colores; las reglas de abajo
+   (html[data-tema]) son comunes a todos los temas. Para agregar uno: un bloque de variables + una entrada en temas.ts. */
+
+/* ---------- Orquídea: oscuro con morados y rosados ---------- */
+html[data-tema='orquidea'] {
+  --bg: #0b0612;
+  --surface: #241230;
+  --surface-2: #331a42;
+  --text-2: #b8a5c6;
+  --accent: #ff4fa3;
+  --t-panel: #170b21;      /* las tres columnas */
+  --t-menu: #2a1538;       /* menús y desplegables */
+  --t-menu-hover: #3c2050;
+  --t-borde: #3a2149;
+  --t-control: #221030;    /* buscador y botones redondos */
+  --t-barra: #5a3a70;      /* barras de desplazamiento */
+  --t-pista: #4a2e5c;      /* fondo de las barras de progreso y volumen */
+  --t-tono: 255 140 210;   /* velo de color para filas y tarjetas al pasar el mouse */
+  --t-inicio: linear-gradient(180deg, #a0156c 0, #6a1258 150px, #2c0f3a 300px, var(--t-panel) 440px);
+  --t-vista-a: #12081b;
+  --t-vista-b: #0e0616;
+  --t-cuenta: radial-gradient(70% 60% at 50% 0%, #6a1258 0%, #1e0a2a 50%, var(--bg) 85%);
+  --t-flotante: #140a1d;   /* ventana del rack y del ecualizador */
+  --t-app: radial-gradient(120% 40% at 30% 0%, #6a1258 0%, #1e0a2a 45%, var(--bg) 80%); /* fondo del teléfono */
+}
+
+/* ---------- Medianoche: azul marino ---------- */
+html[data-tema='medianoche'] {
+  --bg: #060b15;
+  --surface: #14233a;
+  --surface-2: #1d314f;
+  --text-2: #9db0c9;
+  --accent: #3d9bff;
+  --t-panel: #0c1626;
+  --t-menu: #12223a;
+  --t-menu-hover: #1d3354;
+  --t-borde: #243a5c;
+  --t-control: #101d32;
+  --t-barra: #32507c;
+  --t-pista: #2a4266;
+  --t-tono: 130 180 255;
+  --t-inicio: linear-gradient(180deg, #1d4f8f 0, #153b6c 150px, #10233f 300px, var(--t-panel) 440px);
+  --t-vista-a: #0a1424;
+  --t-vista-b: #070e1a;
+  --t-cuenta: radial-gradient(70% 60% at 50% 0%, #1d4f8f 0%, #0b1a30 50%, var(--bg) 85%);
+  --t-flotante: #0a1322;
+  --t-app: radial-gradient(120% 40% at 30% 0%, #1d4f8f 0%, #0b1a30 45%, var(--bg) 80%);
+}
+
+/* ---------- Omnishelf: negro plano, bordes finos y acento verde lima ---------- */
+html[data-tema='omnishelf'] {
+  --bg: #0a0a0a;
+  --surface: #1a1a1a;
+  --surface-2: #262626;
+  --text-2: #a3a3a3;
+  --accent: #d4f04a;
+  --t-sobre-acento: #0a0a0a; /* el lima es claro: texto e íconos encima van en negro */
+  --t-panel: #111111;
+  --t-contorno: #232323;     /* borde fino de las columnas y tarjetas */
+  --t-menu: #161616;
+  --t-menu-hover: #242424;
+  --t-borde: #2a2a2a;
+  --t-control: #141414;
+  --t-barra: #3a3a3a;
+  --t-pista: #333333;
+  --t-tono: 255 255 255;
+  --t-inicio: linear-gradient(180deg, #1b1f0e 0, #141610 160px, var(--t-panel) 340px);
+  --t-vista-a: #121212;
+  --t-vista-b: #0c0c0c;
+  --t-cuenta: radial-gradient(70% 60% at 50% 0%, #2a3310 0%, #121410 50%, var(--bg) 85%);
+  --t-flotante: #111111;
+  --t-app: radial-gradient(120% 40% at 30% 0%, #262e0f 0%, #121410 45%, var(--bg) 80%);
+}
+
+/* ---------- Warm Sand: café oscuro, texto crema y acento naranja tostado ---------- */
+html[data-tema='warmsand'] {
+  --bg: #15110e;
+  --surface: #2a221d;
+  --surface-2: #382d26;
+  --text: #f6f0e8;           /* crema en vez de blanco puro */
+  --text-2: #b8aa9b;
+  --accent: #d0703f;
+  --t-sobre-acento: #f6f0e8;
+  --t-panel: #1e1814;
+  --t-contorno: #2c241e;
+  --t-menu: #2a211b;
+  --t-menu-hover: #3a2e26;
+  --t-borde: #3d3129;
+  --t-control: #251e19;
+  --t-barra: #5a4a3e;
+  --t-pista: #4a3d33;
+  --t-tono: 236 228 218;
+  --t-inicio: linear-gradient(180deg, #5c3220 0, #3d2519 150px, #261c16 300px, var(--t-panel) 440px);
+  --t-vista-a: #1d1612;
+  --t-vista-b: #15110e;
+  --t-cuenta: radial-gradient(70% 60% at 50% 0%, #5c3220 0%, #221a15 50%, var(--bg) 85%);
+  --t-flotante: #1b1511;
+  --t-app: radial-gradient(120% 40% at 30% 0%, #5c3220 0%, #221a15 45%, var(--bg) 80%);
+}
+html[data-tema='warmsand'] body { color: var(--text); }
+
+/* ================= Reglas comunes a todos los temas ================= */
+
+html[data-tema] body,
+html[data-tema] .app.esc-raiz { background: var(--bg); }
+
+/* Columnas */
+html[data-tema] .esc-lateral,
+html[data-tema] .esc-centro,
+html[data-tema] .esc-derecha { background: var(--t-panel); box-shadow: inset 0 0 0 1px var(--t-contorno, transparent); }
+html[data-tema] .esc-rapida-fila { box-shadow: inset 0 0 0 1px var(--t-contorno, transparent); }
+html[data-tema] .esc-centro,
+html[data-tema] .esc-fila .fp-queue,
+html[data-tema] .esc-vista-cola .fp-queue,
+html[data-tema] .esc-desplegable,
+html[data-tema] .esc-raiz .eq-body { scrollbar-color: var(--t-barra) transparent; }
+
+/* Arriba */
+html[data-tema] .esc-redondo,
+html[data-tema] .esc-buscador,
+html[data-tema] .esc-mas { background: var(--t-control); }
+html[data-tema] .esc-redondo:hover,
+html[data-tema] .esc-buscador:hover,
+html[data-tema] .esc-lat-btn:hover { background: var(--surface-2); }
+html[data-tema] .esc-buscador:hover { border-color: var(--t-borde); }
+html[data-tema] .esc-buscador-caja.abierto .esc-buscador { background: var(--surface-2); border-color: var(--accent); }
+html[data-tema] .esc-buscador kbd { background: var(--surface-2); }
+html[data-tema] .esc-mas.abierto { background: var(--accent); color: var(--t-sobre-acento, #fff); }
+html[data-tema] .switch.on span { background: var(--t-sobre-acento, #fff); }
+html[data-tema] .esc-res-play,
+html[data-tema] .contador,
+html[data-tema] .actualizacion-btn,
+html[data-tema] .search-mic.escuchando { color: var(--t-sobre-acento, #fff); }
+
+/* Menús, desplegables y avisos */
+html[data-tema] .esc-menu,
+html[data-tema] .esc-perfil-menu,
+html[data-tema] .esc-desplegable,
+html[data-tema] .esc-actualizar,
+html[data-tema] .sheet { background: var(--t-menu); }
+html[data-tema] .esc-menu button:hover:not(:disabled),
+html[data-tema] .esc-perfil-menu > button:hover,
+html[data-tema] .esc-res-chip:hover { background: var(--t-menu-hover); }
+html[data-tema] .esc-menu-ico { background: var(--t-menu-hover); }
+html[data-tema] .esc-perfil-cab { border-bottom-color: var(--t-borde); }
+html[data-tema] .esc-perfil-sep,
+html[data-tema] .esc-lat-sep { background: var(--t-borde); }
+
+/* Inicio: el degradado de color de arriba */
+html[data-tema] .esc-inicio { background: var(--t-inicio); }
+html[data-tema] .esc-chips .chip:not(.active),
+html[data-tema] .esc-res-chip:not(.on) { background: rgb(var(--t-tono) / 0.16); }
+html[data-tema] .esc-chips .chip:hover:not(.active):not(:disabled) { background: rgb(var(--t-tono) / 0.26); }
+html[data-tema] .esc-rapida-fila { background: rgb(var(--t-tono) / 0.1); }
+html[data-tema] .esc-rapida-fila:hover { background: rgb(var(--t-tono) / 0.2); }
+html[data-tema] .esc-carrusel .card:hover { background: rgb(var(--t-tono) / 0.08); }
+html[data-tema] .esc-flechas button { border-color: var(--t-borde); }
+html[data-tema] .esc-flechas button:hover:not(:disabled) { background: var(--surface-2); }
+
+/* Filas de canciones */
+html[data-tema] .esc-raiz .track-row:hover,
+html[data-tema] .esc-tabla-fila:hover,
+html[data-tema] .esc-raiz .sheet-item:hover { background: rgb(var(--t-tono) / 0.08); }
+html[data-tema] .esc-tabla-fila.elegida { background: rgb(var(--t-tono) / 0.16); }
+html[data-tema] .esc-tabla-cab { background: var(--t-panel); border-bottom-color: var(--t-borde); }
+
+/* Playlist, "sonando ahora" y vista de reproducción: el tinte de la carátula se funde con el color del tema */
+html[data-tema] .esc-pl {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--tinte) 75%, var(--t-panel)) 0, color-mix(in srgb, var(--tinte) 30%, var(--t-panel)) 330px, var(--t-panel) 520px);
+}
+html[data-tema] .esc-ahora {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--tinte) 55%, var(--t-panel)) 0, var(--t-panel) 75%);
+}
+html[data-tema] .esc-ahora-sig { background: rgb(var(--t-tono) / 0.08); }
+html[data-tema] .esc-vista {
+  background: linear-gradient(160deg, color-mix(in srgb, var(--tinte) 70%, var(--t-vista-a)) 0%, color-mix(in srgb, var(--tinte) 28%, var(--t-vista-b)) 55%, var(--t-vista-b) 100%);
+}
+
+/* Reproductor de abajo */
+html[data-tema] .esc-rango::-webkit-slider-runnable-track { background: linear-gradient(90deg, var(--text) var(--pct), var(--t-pista) var(--pct)); }
+html[data-tema] .esc-rango::-moz-range-track { background: linear-gradient(90deg, var(--text) var(--pct), var(--t-pista) var(--pct)); }
+html[data-tema] .esc-rango:hover::-webkit-slider-runnable-track { background: linear-gradient(90deg, var(--accent) var(--pct), var(--t-pista) var(--pct)); }
+html[data-tema] .esc-rango:hover::-moz-range-track { background: linear-gradient(90deg, var(--accent) var(--pct), var(--t-pista) var(--pct)); }
+
+/* Interruptores, cuenta y ventanas flotantes */
+html[data-tema] .switch:not(.on) { background: var(--t-pista); }
+html[data-tema] .esc-raiz .cuenta-screen { background: var(--t-cuenta); }
+html[data-tema] .esc-raiz .eq-screen { background: var(--t-flotante); box-shadow: 0 24px 70px rgba(0, 0, 0, 0.7), 0 0 0 1px var(--t-borde); }
+
+/* ---------- Teléfono (iPhone / web): la interfaz sin la clase esc-raiz ---------- */
+html[data-tema] .app:not(.esc-raiz) { background: var(--t-app); }
+html[data-tema] .app:not(.esc-raiz) .topbar.floating { background: color-mix(in srgb, var(--t-panel) 92%, transparent); }
+html[data-tema] .app:not(.esc-raiz) .bottom-nav { background: var(--t-panel); border-top-color: var(--t-contorno, var(--t-borde)); }
+html[data-tema] .app:not(.esc-raiz) .mini-player { background: var(--surface); box-shadow: inset 0 0 0 1px var(--t-contorno, transparent); }
+html[data-tema] .app:not(.esc-raiz) .progress { background: var(--t-pista); }
+html[data-tema] .app:not(.esc-raiz) .toast,
+html[data-tema] .app:not(.esc-raiz) .sort-menu { background: var(--t-menu); }
+html[data-tema] .app:not(.esc-raiz) .settings-icon { background: var(--surface); }
+html[data-tema] .app:not(.esc-raiz) .chip:not(.active) { background: rgb(var(--t-tono) / 0.14); }
+html[data-tema] .app:not(.esc-raiz) .pl-form input,
+html[data-tema] .app:not(.esc-raiz) .eq-save input { background: var(--surface-2); border-color: var(--t-borde); }
+html[data-tema] .app:not(.esc-raiz) .pl-pick-new { background: var(--surface-2); }
+html[data-tema] .app:not(.esc-raiz) .cuenta-screen { background: var(--t-cuenta); }
+
+/* El rack de efectos (y el ecualizador) es un equipo físico: dentro de su cuerpo vuelven los colores de siempre. */
+html[data-tema] .eq-body {
+  --bg: #030303;
+  --surface: #1d1d1d;
+  --surface-2: #2a2a2a;
+  --text-2: #aaaaaa;
+  --accent: #ff4e6a;
+}
+
+/* ---------- Selector de tema en Configuración ---------- */
+.temas-lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; padding: 4px 16px 12px; }
+.tema-op { display: flex; flex-direction: column; gap: 10px; padding: 10px; border-radius: 12px; text-align: left; background: var(--surface); border: 2px solid transparent; transition: border-color 0.15s, transform 0.15s; }
+.tema-op:hover { transform: translateY(-2px); }
+.tema-op.on { border-color: var(--accent); }
+.tema-muestra { position: relative; height: 70px; border-radius: 8px; overflow: hidden; }
+.tema-muestra i { position: absolute; }
+.tema-muestra .m-fondo { inset: 0; }
+.tema-muestra .m-panel { left: 8px; top: 8px; bottom: 8px; width: 22%; border-radius: 5px; }
+.tema-muestra .m-centro { left: calc(22% + 14px); right: 8px; top: 8px; bottom: 8px; border-radius: 5px; }
+.tema-muestra .m-punto { right: 16px; bottom: 16px; width: 16px; height: 16px; border-radius: 50%; }
+.tema-op b { display: block; font-size: 15px; color: var(--text); }
+.tema-op small { display: block; font-size: 12.5px; color: var(--text-2); margin-top: 2px; }
+
+/* ---------- Vista de la web (PC / teléfono) en Configuración ---------- */
+.vista-nota { margin: 0 16px 10px; font-size: 13px; color: var(--text-2); line-height: 1.4; }
+.vista-opciones { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 16px 12px; }
+
+/* ================= Aero (va al final: sus reglas extra pisan las comunes) =================
+   Estilo reproductores de los 2000 (RealPlayer, Ares): negro carbón, barras con brillo gris,
+   azul de cristal para lo activo y el play como una bola de cristal azul. */
+html[data-tema='aero'] {
+  --bg: #07080a;
+  --surface: #1b1e23;
+  --surface-2: #272b32;
+  --text-2: #a9b3c1;
+  --accent: #3a96ff;
+  --t-gel: linear-gradient(180deg, #8fcbff 0%, #3f9cff 46%, #1263d6 54%, #2a86f0 100%);
+  --t-cristal: radial-gradient(circle at 50% 30%, #bfe4ff 0%, #4aa6ff 28%, #1361d8 62%, #08306f 100%);
+  --t-brillo: linear-gradient(180deg, #34383f 0%, #1d2025 48%, #121418 52%, #0d0f12 100%);
+  --t-panel: #0f1114;
+  --t-contorno: #23272d;
+  --t-menu: rgba(28, 31, 37, 0.94);
+  --t-menu-hover: rgba(58, 150, 255, 0.22);
+  --t-borde: #30353d;
+  --t-control: #16191d;
+  --t-barra: #3d434c;
+  --t-pista: #2a2f36;
+  --t-tono: 170 200 240;
+  --t-inicio: linear-gradient(180deg, #13294a 0, #0f1a2b 150px, #10141a 280px, var(--t-panel) 420px);
+  --t-vista-a: #0f1724;
+  --t-vista-b: #07080a;
+  --t-cuenta: radial-gradient(70% 60% at 50% 0%, #143a72 0%, #0b1220 50%, var(--bg) 85%);
+  --t-flotante: #101216;
+  --t-app: radial-gradient(120% 40% at 30% 0%, #143a72 0%, #0b1220 45%, var(--bg) 80%);
+}
+/* Columnas: borde fino y un reflejo apenas visible arriba */
+html[data-tema='aero'] .esc-lateral,
+html[data-tema='aero'] .esc-centro,
+html[data-tema='aero'] .esc-derecha {
+  box-shadow: inset 0 0 0 1px var(--t-contorno), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+/* Barras de arriba y abajo con brillo de metal oscuro */
+html[data-tema='aero'] .esc-arriba,
+html[data-tema='aero'] .esc-abajo {
+  background: var(--t-brillo);
+  border-radius: 10px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 0 0 1px #000;
+}
+/* Flechas de atrás y adelante: botón cuadrado de cristal azul, como el de RealPlayer */
+html[data-tema='aero'] .esc-flecha { border-radius: 7px; }
+html[data-tema='aero'] .esc-flecha:not(:disabled) {
+  background: var(--t-gel); color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 0 0 1px #0a2a5c;
+}
+html[data-tema='aero'] .esc-flecha:not(:disabled):hover { background: var(--t-gel); filter: brightness(1.12); }
+html[data-tema='aero'] .esc-flecha:disabled { background: var(--t-brillo); box-shadow: 0 0 0 1px #000, inset 0 1px 0 rgba(255, 255, 255, 0.1); }
+/* Menús oscuros con borde y reflejo */
+html[data-tema='aero'] .esc-menu,
+html[data-tema='aero'] .esc-perfil-menu,
+html[data-tema='aero'] .esc-desplegable,
+html[data-tema='aero'] .sheet {
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 0 0 1px var(--t-borde);
+}
+/* El play: bola de cristal azul, con reflejo arriba y brillo abajo */
+html[data-tema='aero'] .esc-play,
+html[data-tema='aero'] .esc-pl-play,
+html[data-tema='aero'] .esc-res-play,
+html[data-tema='aero'] .lista-busq-play,
+html[data-tema='aero'] .play-big {
+  position: relative;
+  background: var(--t-cristal);
+  color: #fff;
+  box-shadow: 0 0 0 1px #041a3d, inset 0 -4px 8px rgba(120, 200, 255, 0.45), 0 2px 10px rgba(30, 120, 255, 0.35);
+}
+html[data-tema='aero'] .esc-play::before,
+html[data-tema='aero'] .esc-pl-play::before,
+html[data-tema='aero'] .esc-res-play::before,
+html[data-tema='aero'] .lista-busq-play::before,
+html[data-tema='aero'] .play-big::before {
+  content: ''; position: absolute; left: 18%; right: 18%; top: 5%; height: 42%;
+  border-radius: 50% / 60% 60% 40% 40%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.05));
+  pointer-events: none;
+}
+html[data-tema='aero'] .esc-play svg,
+html[data-tema='aero'] .esc-pl-play svg,
+html[data-tema='aero'] .esc-res-play svg,
+html[data-tema='aero'] .lista-busq-play svg,
+html[data-tema='aero'] .play-big svg { position: relative; filter: drop-shadow(0 1px 1px rgba(0, 20, 60, 0.6)); }
+html[data-tema='aero'] .esc-play { width: 44px; height: 44px; }
+/* Otros botones de color: gel azul */
+html[data-tema='aero'] .actualizacion-btn,
+html[data-tema='aero'] .party-agregar,
+html[data-tema='aero'] .party-compartir,
+html[data-tema='aero'] .esc-mas.abierto,
+html[data-tema='aero'] .switch.on {
+  background: var(--t-gel);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 0 0 1px #0a2a5c;
+}
+/* Barras de progreso y volumen en azul */
+html[data-tema='aero'] .esc-rango::-webkit-slider-runnable-track { background: linear-gradient(90deg, #4aa6ff var(--pct), var(--t-pista) var(--pct)); }
+html[data-tema='aero'] .esc-rango::-moz-range-track { background: linear-gradient(90deg, #4aa6ff var(--pct), var(--t-pista) var(--pct)); }
+html[data-tema='aero'] .app:not(.esc-raiz) .progress div { background: var(--t-gel); }
+/* Teléfono: barra de abajo con brillo de metal oscuro */
+html[data-tema='aero'] .app:not(.esc-raiz) .bottom-nav { background: var(--t-brillo); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1); }
+html[data-tema='aero'] .app:not(.esc-raiz) .mini-player { background: var(--t-brillo); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 0 0 1px #000; }
+/* El rack y el ecualizador no llevan cristal */
+html[data-tema='aero'] .eq-body .switch.on { background: var(--accent); box-shadow: none; }

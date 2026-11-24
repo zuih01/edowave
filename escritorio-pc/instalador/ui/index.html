@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Instalar Edowave</title>
+<style>
+  /* Instalador de Edowave (la maqueta de disenos/instalador, tema "Reproductor"). */
+  :root {
+    --text: #ffffff;
+    --text-2: rgba(255, 255, 255, 0.68);
+    --linea: rgba(255, 255, 255, 0.14);
+    color-scheme: dark;
+    font-family: 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; }
+  body {
+    color: var(--text); user-select: none; position: relative; isolation: isolate;
+    display: flex; flex-direction: column;
+    background: linear-gradient(160deg, color-mix(in srgb, #5b4a8a 55%, #101010) 0%, color-mix(in srgb, #5b4a8a 22%, #0e0e0e) 55%, #0e0e0e 100%);
+  }
+  .fondo-difuso { position: fixed; inset: -60px; z-index: -1; background: url('icon.svg') center / 70% no-repeat; filter: blur(70px) saturate(1.3); opacity: 0.35; pointer-events: none; }
+  button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+  [hidden] { display: none !important; }
+
+  /* Barra de título propia (se puede arrastrar la ventana desde aquí) */
+  .barra { height: 32px; display: flex; justify-content: flex-end; flex: none; }
+  .ctrl { width: 46px; height: 32px; display: grid; place-items: center; color: rgba(255, 255, 255, 0.7); }
+  .ctrl:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
+  .ctrl.cerrar:hover { background: #c42b1c; color: #fff; }
+  .ctrl svg { width: 10px; height: 10px; }
+
+  .pantalla { flex: 1; display: flex; flex-direction: column; padding: 8px 40px 28px; min-height: 0; }
+  h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 8px; }
+  p { margin: 0; color: var(--text-2); font-size: 14px; line-height: 1.6; }
+  .version { font-size: 12px; color: rgba(255, 255, 255, 0.45); }
+
+  .centrada { position: relative; align-items: center; justify-content: center; gap: 28px; padding-bottom: 40px; }
+  .logo-grande { width: 96px; height: 96px; }
+  .abajo-centro { position: absolute; left: 0; right: 0; bottom: 22px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .enlace { font-size: 13px; color: rgba(255, 255, 255, 0.75); text-decoration: underline; text-underline-offset: 3px; }
+  .enlace:hover { color: #fff; }
+
+  .terminos { flex: 1; min-height: 0; overflow-y: auto; margin-top: 4px; padding: 14px 16px; border-radius: 12px; background: rgba(0, 0, 0, 0.25); font-size: 13px; line-height: 1.6; color: var(--text-2); user-select: text; scrollbar-width: thin; scrollbar-color: #4a4a4a transparent; }
+  .terminos h3 { font-size: 13px; font-weight: 600; color: var(--text); margin: 16px 0 4px; }
+  .terminos p { font-size: 13px; }
+  .terminos .fecha { font-size: 12px; color: rgba(255, 255, 255, 0.45); }
+  .terminos ul { margin: 0; padding-left: 18px; }
+  .terminos li { margin: 2px 0; }
+
+  .casilla { display: flex; align-items: center; gap: 10px; margin-top: 18px; font-size: 14px; cursor: pointer; }
+  .casilla input { accent-color: #fff; width: 16px; height: 16px; margin: 0; cursor: pointer; }
+  .progreso { height: 3px; margin-top: 24px; background: rgba(255, 255, 255, 0.15); border-radius: 2px; overflow: hidden; }
+  .progreso i { display: block; height: 100%; width: 0; background: #fff; transition: width 0.2s linear; }
+  .estado { margin-top: 10px; font-size: 12px; color: var(--text-2); }
+  .error { margin-top: 14px; font-size: 13px; color: #ffb4b4; }
+
+  .pie { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: auto; padding-top: 20px; }
+  .btn { height: 36px; padding: 0 20px; border-radius: 999px; font-size: 14px; font-weight: 600; transition: transform 0.15s, background 0.15s; }
+  .btn.primario { background: #fff; color: #000; }
+  .btn.primario:hover:not(:disabled) { transform: scale(1.04); }
+  .btn.primario:disabled { opacity: 0.35; cursor: default; }
+  .btn.texto { color: #fff; }
+  .btn.texto:hover { background: rgba(255, 255, 255, 0.08); }
+  .centrada .btn { padding: 0 36px; height: 40px; }
+</style>
+</head>
+<body>
+  <div class="fondo-difuso" aria-hidden="true"></div>
+  <div class="barra" data-tauri-drag-region>
+    <button class="ctrl" id="minimizar" aria-label="Minimizar"><svg viewBox="0 0 10 10"><path d="M0 5h10" stroke="currentColor" /></svg></button>
+    <button class="ctrl cerrar" id="cerrar" aria-label="Cerrar"><svg viewBox="0 0 10 10"><path d="M0 0l10 10M10 0 0 10" stroke="currentColor" /></svg></button>
+  </div>
+
+  <!-- 1. Inicio -->
+  <section class="pantalla centrada" data-p="1" data-tauri-drag-region>
+    <img class="logo-grande" src="icon.svg" alt="Edowave" />
+    <button class="btn primario" data-ir="3">Instalar</button>
+    <div class="abajo-centro">
+      <button class="enlace" data-ir="2">Ver términos y condiciones</button>
+      <p class="version">Versión <span class="v"></span></p>
+    </div>
+  </section>
+
+  <!-- 2. Términos y condiciones -->
+  <section class="pantalla" data-p="2" hidden>
+    <h1>Términos y condiciones de uso</h1>
+    <div class="terminos" tabindex="0">
+      <p class="fecha">Última actualización: 13 de noviembre de 2026</p>
+      <h3>1. Qué es esta app</h3>
+      <p>Edowave es un reproductor privado y experimental. Solo se entra por invitación, y está pensado para un grupo pequeño de personas.</p>
+      <h3>2. Es una versión en desarrollo</h3>
+      <ul>
+        <li>La app está en pruebas y puede tener errores: fallas al reproducir, pantallas que no cargan, datos incompletos o cambios sin aviso.</li>
+        <li>Puede dejar de estar disponible por momentos, por ejemplo durante mantenciones o actualizaciones.</li>
+        <li>Se entrega “tal cual”, sin garantía de funcionamiento continuo.</li>
+      </ul>
+      <h3>3. Catálogo de canciones</h3>
+      <ul>
+        <li>La biblioteca es limitada y todavía faltan muchas canciones.</li>
+        <li>Se irán agregando poco a poco, sin fecha fija.</li>
+      </ul>
+      <h3>4. Sugerencias de canciones</h3>
+      <ul>
+        <li>Puedes sugerir canciones desde tu perfil, en “Sugerir una canción”.</li>
+        <li>Las sugerencias no se agregan al instante: cada una la revisa y la aprueba el administrador.</li>
+        <li>Sugerir una canción no garantiza que se agregue.</li>
+      </ul>
+      <h3>5. Tu cuenta</h3>
+      <ul>
+        <li>Tu cuenta es personal; no compartas tu usuario ni tu contraseña.</li>
+        <li>Tu contraseña se guarda cifrada: nadie puede verla, ni siquiera el administrador.</li>
+        <li>El administrador puede cerrar sesiones o desactivar cuentas si hay mal uso.</li>
+      </ul>
+      <h3>6. Tus datos</h3>
+      <ul>
+        <li>Para recomendarte música se guarda lo que escuchas, tus “me gusta” y “no me gusta”, y tus playlists.</li>
+        <li>Para las estadísticas de uso se guarda el país desde donde escuchas, pero no tu dirección IP.</li>
+        <li>Tus datos no se venden ni se comparten con terceros.</li>
+      </ul>
+      <h3>7. Uso responsable</h3>
+      <ul>
+        <li>La música es solo para escuchar dentro de la app; no está permitido descargarla ni redistribuirla.</li>
+        <li>No intentes alterar el funcionamiento de la app o del servidor.</li>
+      </ul>
+      <h3>8. Cambios</h3>
+      <p>Estos términos pueden cambiar a medida que la app avance. Si sigues usándola después de un cambio, se entiende que lo aceptas.</p>
+    </div>
+    <div class="pie">
+      <button class="btn primario" data-ir="1">Volver</button>
+    </div>
+  </section>
+
+  <!-- 3. Instalar -->
+  <section class="pantalla" data-p="3" hidden>
+    <h1 id="t3">Instalar</h1>
+    <p id="p3">Edowave se instalará en tu carpeta de usuario.</p>
+    <label class="casilla" id="caja"><input type="checkbox" id="atajo" checked /> Crear acceso directo en el escritorio</label>
+    <div class="progreso" id="prog" hidden><i id="barra"></i></div>
+    <div class="estado" id="estado"></div>
+    <div class="error" id="error" hidden></div>
+    <div class="pie" id="pie3">
+      <button class="btn texto" data-ir="1">Atrás</button>
+      <button class="btn primario" id="instalar">Instalar</button>
+    </div>
+  </section>
+
+  <!-- Desinstalar (cuando Windows lo abre desde "Agregar o quitar programas") -->
+  <section class="pantalla centrada" data-p="desinstalar" hidden>
+    <img class="logo-grande" src="icon.svg" alt="" />
+    <p id="pd">¿Quieres desinstalar Edowave de este PC?</p>
+    <div class="pie" id="pied" style="margin-top: 0; padding-top: 0">
+      <button class="btn texto" id="cancelar-d">Cancelar</button>
+      <button class="btn primario" id="desinstalar">Desinstalar</button>
+    </div>
+  </section>
+
+<script>
+  const { invoke } = window.__TAURI__.core;
+  const ventana = window.__TAURI__.window.getCurrentWindow();
+  const $ = (s) => document.querySelector(s);
+  const ir = (n) => document.querySelectorAll('[data-p]').forEach((p) => (p.hidden = p.dataset.p !== String(n)));
+  const cerrar = () => ventana.close();
+
+  $('#minimizar').onclick = () => ventana.minimize();
+  $('#cerrar').onclick = cerrar;
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-ir]');
+    if (b && !b.disabled) ir(b.dataset.ir);
+  });
+  // Sin menú de clic derecho del navegador (es un programa, no una página).
+  document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+  invoke('version').then((v) => document.querySelectorAll('.v').forEach((x) => (x.textContent = v)));
+  invoke('modo').then((m) => m === 'desinstalar' && ir('desinstalar'));
+
+  $('#instalar').onclick = async () => {
+    const atajo = $('#atajo').checked;
+    $('#caja').hidden = true;
+    $('#error').hidden = true;
+    $('#prog').hidden = false;
+    $('#t3').textContent = 'Instalando…';
+    $('#pie3').querySelectorAll('button').forEach((b) => (b.disabled = true));
+    // La copia es casi instantánea: la barra avanza suave mientras tanto.
+    let p = 0;
+    const t = setInterval(() => {
+      p = Math.min(90, p + 4 + Math.random() * 6);
+      $('#barra').style.width = p + '%';
+      $('#estado').textContent = Math.round(p) + ' %';
+    }, 90);
+    try {
+      await Promise.all([invoke('instalar', { accesoDirecto: atajo }), new Promise((r) => setTimeout(r, 1400))]);
+      clearInterval(t);
+      $('#barra').style.width = '100%';
+      $('#estado').textContent = '100 %';
+      setTimeout(() => {
+        $('#t3').textContent = 'Listo';
+        $('#p3').textContent = atajo ? 'Edowave está instalada. Dejamos un acceso directo en tu escritorio.' : 'Edowave está instalada. La encuentras en el menú Inicio.';
+        $('#prog').hidden = true;
+        $('#estado').textContent = '';
+        $('#pie3').innerHTML = '<button class="btn texto" id="fin-cerrar">Cerrar</button><button class="btn primario" id="abrir">Abrir Edowave</button>';
+        $('#fin-cerrar').onclick = cerrar;
+        $('#abrir').onclick = () => invoke('abrir_musica').catch((e) => alert(e));
+      }, 250);
+    } catch (e) {
+      clearInterval(t);
+      $('#t3').textContent = 'No se pudo instalar';
+      $('#prog').hidden = true;
+      $('#estado').textContent = '';
+      $('#error').textContent = String(e);
+      $('#error').hidden = false;
+      $('#caja').hidden = false;
+      $('#pie3').querySelectorAll('button').forEach((b) => (b.disabled = false));
+      $('#instalar').textContent = 'Reintentar';
+    }
+  };
+
+  $('#cancelar-d').onclick = cerrar;
+  $('#desinstalar').onclick = async () => {
+    $('#pied').querySelectorAll('button').forEach((b) => (b.disabled = true));
+    try {
+      await invoke('desinstalar');
+      $('#pd').textContent = 'Edowave se desinstaló.';
+      $('#pied').innerHTML = '<button class="btn primario" id="ok-d">Cerrar</button>';
+      $('#ok-d').onclick = cerrar;
+    } catch (e) {
+      $('#pd').textContent = 'No se pudo desinstalar: ' + e;
+      $('#pied').querySelectorAll('button').forEach((b) => (b.disabled = false));
+    }
+  };
+</script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+{
+  "name": "reproductor",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview --host",
+    "certificado": "node scripts/certificado.mjs",
+    "iconos": "node scripts/make-icons.mjs",
+    "iphone": "vite build && vite preview"
+  },
+  "dependencies": {
+    "@capacitor-community/speech-recognition": "^7.0.1",
+    "@capacitor/android": "^7.6.10",
+    "@capacitor/app": "^7.1.2",
+    "@capacitor/core": "^7.6.10",
+    "@capacitor/status-bar": "^7.0.6",
+    "idb": "^8.0.4",
+    "music-metadata": "^12.3.5",
+    "qrcode-generator": "^1.4.4",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "zustand": "^5.1.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.6.10",
+    "@resvg/resvg-js": "^2.6.2",
+    "@tauri-apps/cli": "^2.12.4",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.2.1",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.6",
+    "vite-plugin-pwa": "^2.0.0"
+  }
+}

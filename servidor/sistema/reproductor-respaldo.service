@@ -1,0 +1,8 @@
+[Unit]
+Description=Respaldo de la base de datos del reproductor
+Requires=reproductor-db.service
+After=reproductor-db.service
+
+[Service]
+Type=oneshot
+ExecStart=%h/reproductor/app/sistema/respaldo.sh

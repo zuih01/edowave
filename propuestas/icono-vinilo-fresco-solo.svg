@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <!-- PROPUESTA (no implementada): vinilo solo y completo sobre un cuadrado menta → celeste → lila. Estilo Fluent. -->
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7ef0d6" />
+      <stop offset="0.5" stop-color="#6cc8ff" />
+      <stop offset="1" stop-color="#a58bff" />
+    </linearGradient>
+    <radialGradient id="tileLight" cx="0.25" cy="0.05" r="0.9">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.35" />
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0" />
+    </radialGradient>
+    <!-- Disco azul noche con volumen -->
+    <radialGradient id="disc" cx="0.4" cy="0.35" r="0.75">
+      <stop offset="0" stop-color="#3b4270" />
+      <stop offset="0.6" stop-color="#1d2142" />
+      <stop offset="1" stop-color="#0f1126" />
+    </radialGradient>
+    <!-- Reflejos con el color del fondo -->
+    <linearGradient id="gleam" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#9ff5e4" stop-opacity="0.5" />
+      <stop offset="1" stop-color="#9ff5e4" stop-opacity="0" />
+    </linearGradient>
+    <linearGradient id="gleam2" x1="1" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#c7b8ff" stop-opacity="0.35" />
+      <stop offset="1" stop-color="#c7b8ff" stop-opacity="0" />
+    </linearGradient>
+    <!-- Etiqueta coral -->
+    <linearGradient id="label" x1="0.2" y1="0.1" x2="0.8" y2="1">
+      <stop offset="0" stop-color="#ffb199" />
+      <stop offset="1" stop-color="#ff5f6d" />
+    </linearGradient>
+    <clipPath id="discClip">
+      <circle cx="128" cy="122" r="76" />
+    </clipPath>
+    <filter id="ground" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="9" />
+    </filter>
+    <filter id="lift" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="6" stdDeviation="7" flood-color="#2b2a6b" flood-opacity="0.4" />
+    </filter>
+  </defs>
+
+  <!-- Sombra suave en el piso -->
+  <ellipse cx="128" cy="230" rx="86" ry="11" fill="#14123a" opacity="0.3" filter="url(#ground)" />
+
+  <!-- Cuadrado redondeado (mismas medidas que el ícono aprobado) -->
+  <rect x="26" y="20" width="204" height="204" rx="52" fill="url(#tile)" />
+  <rect x="26" y="20" width="204" height="204" rx="52" fill="url(#tileLight)" />
+
+  <!-- Disco completo, en su propia capa -->
+  <g filter="url(#lift)">
+    <circle cx="128" cy="122" r="76" fill="url(#disc)" />
+  </g>
+  <!-- Dos surcos anchos -->
+  <circle cx="128" cy="122" r="60" fill="none" stroke="#ffffff" stroke-opacity="0.09" stroke-width="3" />
+  <circle cx="128" cy="122" r="46" fill="none" stroke="#ffffff" stroke-opacity="0.09" stroke-width="3" />
+  <!-- Reflejos en cuña: menta arriba a la izquierda, lila abajo a la derecha -->
+  <g clip-path="url(#discClip)">
+    <path d="M128 122 L60 40 A110 110 0 0 1 120 12 Z" fill="url(#gleam)" />
+    <path d="M128 122 L196 204 A110 110 0 0 1 136 232 Z" fill="url(#gleam2)" />
+  </g>
+  <!-- Etiqueta y agujero -->
+  <circle cx="128" cy="122" r="27" fill="url(#label)" />
+  <circle cx="128" cy="122" r="6" fill="#fff4f0" />
+</svg>

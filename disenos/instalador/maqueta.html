@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="es" data-tema="rep">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Instalador de Música (maqueta)</title>
+<style>
+  /* Maqueta visual del instalador (Windows 10/11). NO instala nada.
+     Minimalista: un solo color de fondo (el de la app), texto blanco y un solo color de acento (morado del logo). */
+  :root {
+    --bg: #0b0b0f;
+    --text: #ffffff;
+    --text-2: #9a9aa3;
+    --linea: #24242b;
+    --acento: #7c5cff;
+    color-scheme: dark;
+    font-family: 'Segoe UI Variable', 'Segoe UI', Roboto, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { background: #1b1d24; color: var(--text); display: grid; place-items: center; user-select: none; }
+  button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+
+  /* Ventana */
+  .ventana { width: 560px; height: 420px; display: flex; flex-direction: column; background: var(--bg); border: 1px solid var(--linea); border-radius: 8px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45); overflow: hidden; }
+  .w10 .ventana { border-radius: 0; }
+  .barra { height: 32px; display: flex; align-items: center; justify-content: flex-end; flex: none; }
+  .ctrl { width: 46px; height: 32px; display: grid; place-items: center; color: var(--text-2); }
+  .ctrl:hover { background: #1c1c22; color: var(--text); }
+  .ctrl.cerrar:hover { background: #c42b1c; color: #fff; }
+  .ctrl svg { width: 10px; height: 10px; }
+
+  /* Contenido: una sola columna */
+  .pantalla { flex: 1; display: flex; flex-direction: column; padding: 8px 40px 28px; min-height: 0; }
+  .pantalla[hidden] { display: none; }
+  .logo { width: 44px; height: 44px; margin-bottom: 20px; }
+  h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 8px; }
+  p { margin: 0; color: var(--text-2); font-size: 14px; line-height: 1.6; }
+  .version { margin-top: 14px; font-size: 12px; color: #5f616c; }
+  /* Primera pantalla: solo el logo, el botón y la versión, al centro */
+  .pantalla.centrada { align-items: center; justify-content: center; gap: 28px; padding-bottom: 40px; }
+  .logo-grande { width: 96px; height: 96px; }
+  .pantalla.centrada .btn { padding: 0 36px; height: 40px; }
+  .pantalla.centrada { position: relative; }
+  .abajo-centro { position: absolute; left: 0; right: 0; bottom: 22px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .abajo-centro .version { margin: 0; }
+  .enlace { font-size: 13px; color: var(--text-2); text-decoration: underline; text-underline-offset: 3px; }
+  .enlace:hover { color: var(--text); }
+  .pie { justify-content: flex-end; }
+  .terminos { flex: 1; min-height: 0; overflow-y: auto; margin-top: 4px; padding-right: 10px; font-size: 13px; line-height: 1.6; color: var(--text-2); user-select: text; scrollbar-width: thin; scrollbar-color: #3a3a44 transparent; }
+  .terminos h3 { font-size: 13px; font-weight: 600; color: var(--text); margin: 16px 0 4px; }
+  .terminos p { font-size: 13px; margin: 0; }
+  .terminos .fecha { font-size: 12px; color: #6b6d78; }
+  .terminos ul { margin: 0; padding-left: 18px; }
+  .terminos li { margin: 2px 0; }
+  .casilla { display: flex; align-items: center; gap: 10px; margin-top: 18px; font-size: 14px; cursor: pointer; }
+  [hidden] { display: none !important; }
+  .casilla input { accent-color: var(--acento); width: 16px; height: 16px; margin: 0; cursor: pointer; }
+  .progreso { height: 3px; margin-top: 24px; background: var(--linea); border-radius: 2px; overflow: hidden; }
+  .progreso i { display: block; height: 100%; width: 0; background: var(--acento); transition: width 0.2s linear; }
+  .estado { margin-top: 10px; font-size: 12px; color: var(--text-2); }
+
+  /* Pie: puntos de los pasos + botón */
+  .pie { display: flex; align-items: center; gap: 12px; margin-top: auto; padding-top: 20px; }
+  .puntos { display: flex; gap: 6px; margin-right: auto; }
+  .puntos i { width: 6px; height: 6px; border-radius: 50%; background: var(--linea); transition: background 0.2s, width 0.2s; }
+  .puntos i.on { width: 18px; border-radius: 3px; background: var(--acento); }
+  .btn { height: 36px; padding: 0 20px; border-radius: 999px; font-size: 14px; font-weight: 600; }
+  .btn.primario { background: var(--text); color: #000; }
+  .btn.primario:disabled { opacity: 0.3; cursor: default; }
+  .btn.texto { color: var(--text-2); }
+  .btn.texto:hover { color: var(--text); }
+
+  /* Acceso directo en el escritorio (aparece al terminar) */
+  .acceso { position: fixed; top: 20px; left: 20px; display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 12px; opacity: 0; transition: opacity 0.4s; }
+  .acceso.visible { opacity: 1; }
+  .acceso img { width: 44px; height: 44px; }
+
+  .nota { position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%); font-size: 12px; color: #6b6d78; display: flex; gap: 14px; }
+  .nota button { color: #8c8e9a; text-decoration: underline; }
+  .nota button.on { color: var(--text); text-decoration: none; }
+
+  /* =================== Modo claro (como la configuración inicial de Windows 11) ===================
+     Ventana casi blanca con un leve tinte de color en las esquinas; texto oscuro; acento morado del logo. */
+  :root {
+    --bg: #f9f9fc;
+    --text: #1b1b1f;
+    --text-2: #5c5e66;
+    --linea: #e1e1e8;
+    --acento: #6b4cf0;
+    color-scheme: light;
+  }
+  body { background: radial-gradient(60% 70% at 15% 20%, #dfe6fb 0%, transparent 60%), radial-gradient(55% 65% at 85% 85%, #e7e0fb 0%, transparent 60%), #eef1f8; }
+  .ventana {
+    background:
+      radial-gradient(55% 60% at 0% 0%, rgba(214, 224, 252, 0.75) 0%, transparent 70%),
+      radial-gradient(50% 55% at 100% 100%, rgba(226, 216, 252, 0.7) 0%, transparent 70%),
+      var(--bg);
+    border-color: rgba(0, 0, 0, 0.06);
+    box-shadow: 0 18px 50px rgba(40, 50, 90, 0.16), 0 2px 6px rgba(40, 50, 90, 0.06);
+  }
+  .w10 .ventana { border-color: #c9ccd6; }
+  .ctrl:hover { background: rgba(0, 0, 0, 0.05); }
+  .version, .terminos .fecha { color: #8a8c96; }
+  .terminos { scrollbar-color: #c4c6d0 transparent; }
+  /* Botón principal: rectángulo de esquinas suaves, lleno con el acento (estilo Windows) */
+  .btn { border-radius: 5px; }
+  .btn.primario { background: var(--acento); color: #fff; box-shadow: 0 1px 2px rgba(60, 40, 160, 0.25); }
+  .btn.primario:hover:not(:disabled) { background: #5a3be0; }
+  .btn.texto { color: var(--text); }
+  .btn.texto:hover { background: rgba(0, 0, 0, 0.05); }
+  .enlace { color: var(--acento); }
+  .enlace:hover { color: #4a2fd4; }
+  .progreso i { background: var(--acento); }
+  .acceso { color: #1b1b1f; text-shadow: none; }
+  .nota { color: #7a7c86; }
+  .nota button { color: #6b6d78; }
+
+  /* =================== Tema de prueba "como el reproductor" ===================
+     Igual que la vista de reproducción de la app en PC: fondo oscuro con la carátula (aquí, el logo) difuminada
+     detrás, paneles translúcidos, texto blanco y botón blanco redondo. Se activa abajo con "Tema: Reproductor". */
+  .fondo-difuso { display: none; }
+  [data-tema='rep'] { --bg: #0e0e0e; --text: #ffffff; --text-2: rgba(255, 255, 255, 0.68); --linea: rgba(255, 255, 255, 0.14); --acento: #ffffff; color-scheme: dark; }
+  [data-tema='rep'] body { background: radial-gradient(60% 60% at 30% 30%, #2a2240 0%, transparent 70%), radial-gradient(50% 60% at 80% 80%, #2b2a1c 0%, transparent 70%), #0b0b0d; }
+  [data-tema='rep'] .ventana {
+    position: relative; isolation: isolate;
+    background: linear-gradient(160deg, color-mix(in srgb, #5b4a8a 55%, #101010) 0%, color-mix(in srgb, #5b4a8a 22%, #0e0e0e) 55%, #0e0e0e 100%);
+    border-color: rgba(255, 255, 255, 0.08); border-radius: 12px;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.6);
+  }
+  [data-tema='rep'].w10 .ventana, [data-tema='rep'] .w10 .ventana { border-radius: 0; }
+  [data-tema='rep'] .fondo-difuso { display: block; position: absolute; inset: -60px; z-index: -1; background: url('../../public/icon.svg') center / 70% no-repeat; filter: blur(70px) saturate(1.3); opacity: 0.35; pointer-events: none; }
+  [data-tema='rep'] .ctrl { color: rgba(255, 255, 255, 0.7); }
+  [data-tema='rep'] .ctrl:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
+  [data-tema='rep'] .terminos { background: rgba(0, 0, 0, 0.25); border-radius: 12px; padding: 14px 16px; scrollbar-color: #4a4a4a transparent; }
+  [data-tema='rep'] .version, [data-tema='rep'] .terminos .fecha { color: rgba(255, 255, 255, 0.45); }
+  [data-tema='rep'] .btn { border-radius: 999px; }
+  [data-tema='rep'] .btn.primario { background: #fff; color: #000; box-shadow: none; }
+  [data-tema='rep'] .btn.primario:hover:not(:disabled) { background: #fff; transform: scale(1.04); }
+  [data-tema='rep'] .btn.texto { color: #fff; }
+  [data-tema='rep'] .btn.texto:hover { background: rgba(255, 255, 255, 0.08); }
+  [data-tema='rep'] .enlace { color: rgba(255, 255, 255, 0.75); }
+  [data-tema='rep'] .enlace:hover { color: #fff; }
+  [data-tema='rep'] .progreso { background: rgba(255, 255, 255, 0.15); }
+  [data-tema='rep'] .acceso { color: #fff; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8); }
+  [data-tema='rep'] .nota, [data-tema='rep'] .nota button { color: rgba(255, 255, 255, 0.5); }
+  [data-tema='rep'] .nota button.on { color: #fff; }
+  .btn { transition: transform 0.15s, background 0.15s; }
+</style>
+</head>
+<body class="w11">
+  <div class="acceso" id="acceso"><img src="../../public/icon.svg" alt="" />Música</div>
+
+  <div class="ventana" role="dialog" aria-label="Instalar Música">
+    <div class="fondo-difuso" aria-hidden="true"></div>
+    <div class="barra">
+      <button class="ctrl" aria-label="Minimizar"><svg viewBox="0 0 10 10"><path d="M0 5h10" stroke="currentColor" /></svg></button>
+      <button class="ctrl cerrar" aria-label="Cerrar"><svg viewBox="0 0 10 10"><path d="M0 0l10 10M10 0 0 10" stroke="currentColor" /></svg></button>
+    </div>
+
+    <!-- 1. Bienvenida -->
+    <section class="pantalla centrada" data-p="1">
+      <img class="logo-grande" src="../../public/icon.svg" alt="Música" />
+      <button class="btn primario" data-ir="3">Instalar</button>
+      <div class="abajo-centro">
+        <button class="enlace" data-ir="2">Ver términos y condiciones</button>
+        <p class="version">Versión 0.9.0-beta.56</p>
+      </div>
+    </section>
+
+    <!-- 2. Términos -->
+    <section class="pantalla" data-p="2" hidden>
+      <h1>Términos y condiciones de uso</h1>
+      <div class="terminos" tabindex="0">
+        <p class="fecha">Última actualización: 13 de noviembre de 2026</p>
+        <h3>1. Qué es esta app</h3>
+        <p>Música es un reproductor privado y experimental. Solo se entra por invitación, y está pensado para un grupo pequeño de personas.</p>
+        <h3>2. Es una versión en desarrollo</h3>
+        <ul>
+          <li>La app está en pruebas y puede tener errores: fallas al reproducir, pantallas que no cargan, datos incompletos o cambios sin aviso.</li>
+          <li>Puede dejar de estar disponible por momentos, por ejemplo durante mantenciones o actualizaciones.</li>
+          <li>Se entrega “tal cual”, sin garantía de funcionamiento continuo.</li>
+        </ul>
+        <h3>3. Catálogo de canciones</h3>
+        <ul>
+          <li>La biblioteca es limitada y todavía faltan muchas canciones.</li>
+          <li>Se irán agregando poco a poco, sin fecha fija.</li>
+        </ul>
+        <h3>4. Sugerencias de canciones</h3>
+        <ul>
+          <li>Puedes sugerir canciones desde tu perfil, en “Sugerir una canción”.</li>
+          <li>Las sugerencias no se agregan al instante: cada una la revisa y la aprueba el administrador.</li>
+          <li>Sugerir una canción no garantiza que se agregue.</li>
+        </ul>
+        <h3>5. Tu cuenta</h3>
+        <ul>
+          <li>Tu cuenta es personal; no compartas tu usuario ni tu contraseña.</li>
+          <li>Tu contraseña se guarda cifrada: nadie puede verla, ni siquiera el administrador.</li>
+          <li>El administrador puede cerrar sesiones o desactivar cuentas si hay mal uso.</li>
+        </ul>
+        <h3>6. Tus datos</h3>
+        <ul>
+          <li>Para recomendarte música se guarda lo que escuchas, tus “me gusta” y “no me gusta”, y tus playlists.</li>
+          <li>Para las estadísticas de uso se guarda el país desde donde escuchas, pero no tu dirección IP.</li>
+          <li>Tus datos no se venden ni se comparten con terceros.</li>
+        </ul>
+        <h3>7. Uso responsable</h3>
+        <ul>
+          <li>La música es solo para escuchar dentro de la app; no está permitido descargarla ni redistribuirla.</li>
+          <li>No intentes alterar el funcionamiento de la app o del servidor.</li>
+        </ul>
+        <h3>8. Cambios</h3>
+        <p>Estos términos pueden cambiar a medida que la app avance. Si sigues usándola después de un cambio, se entiende que lo aceptas.</p>
+      </div>
+      <div class="pie">
+        <button class="btn primario" data-ir="1">Volver</button>
+      </div>
+    </section>
+
+    <!-- 3. Instalación -->
+    <section class="pantalla" data-p="3" hidden>
+      <h1 id="t3">Instalar</h1>
+      <p id="p3">Música se instalará en tu carpeta de usuario.</p>
+      <label class="casilla" id="caja"><input type="checkbox" id="atajo" checked /> Crear acceso directo en el escritorio</label>
+      <div class="progreso" id="prog" hidden><i id="barra"></i></div>
+      <div class="estado" id="estado"></div>
+      <div class="pie" id="pie3">
+        <button class="btn texto" data-ir="1">Atrás</button>
+        <button class="btn primario" id="instalar">Instalar</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="nota">
+    <span>Maqueta — no instala nada</span>
+    <button class="on" data-win="w11">Windows 11</button>
+    <button data-win="w10">Windows 10</button>
+  </div>
+
+<script>
+  const $ = (s) => document.querySelector(s);
+  document.addEventListener('click', (e) => {
+    const t = e.target.closest('[data-tema-btn]');
+    if (!t) return;
+    document.documentElement.dataset.tema = t.dataset.temaBtn;
+    document.querySelectorAll('[data-tema-btn]').forEach((x) => x.classList.toggle('on', x === t));
+  });
+  const ir = (n) => document.querySelectorAll('[data-p]').forEach((p) => (p.hidden = p.dataset.p !== String(n)));
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-ir]');
+    if (b && !b.disabled) ir(Number(b.dataset.ir));
+    const w = e.target.closest('[data-win]');
+    if (w) {
+      document.body.className = w.dataset.win;
+      document.querySelectorAll('[data-win]').forEach((x) => x.classList.toggle('on', x === w));
+    }
+  });
+  $('#instalar').addEventListener('click', () => {
+    const atajo = $('#atajo').checked;
+    $('#caja').hidden = true;
+    $('#prog').hidden = false;
+    $('#t3').textContent = 'Instalando…';
+    $('#pie3').querySelectorAll('button').forEach((b) => (b.disabled = true));
+    let p = 0;
+    const t = setInterval(() => {
+      p = Math.min(100, p + 3 + Math.random() * 6);
+      $('#barra').style.width = p + '%';
+      $('#estado').textContent = Math.round(p) + ' %';
+      if (p >= 100) {
+        clearInterval(t);
+        $('#t3').textContent = 'Listo';
+        $('#p3').textContent = atajo ? 'Música está instalada. Dejamos un acceso directo en tu escritorio.' : 'Música está instalada.';
+        $('#prog').hidden = true;
+        $('#estado').textContent = '';
+        if (atajo) $('#acceso').classList.add('visible');
+        $('#pie3').innerHTML = '<button class="btn texto" onclick="location.reload()">Cerrar</button><button class="btn primario">Abrir Música</button>';
+      }
+    }, 110);
+  });
+</script>
+</body>
+</html>

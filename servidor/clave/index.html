@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="referrer" content="no-referrer" />
+  <meta name="robots" content="noindex" />
+  <title>Nueva contraseña · Edowave</title>
+  <style>
+    :root { --bg: #030303; --surface: #1d1d1d; --surface-2: #2a2a2a; --line: #333; --text: #fff; --text-2: #aaa; --accent: #ff4e6a; --ok: #4ade80; --bad: #ff7a7a; color-scheme: dark; font-family: Roboto, 'Segoe UI', system-ui, -apple-system, sans-serif; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: var(--bg); color: var(--text); }
+    body { min-height: 100vh; display: grid; place-items: center; padding: 16px; font-size: 15px; line-height: 1.45; }
+    [hidden] { display: none !important; }
+    .tarjeta { width: min(380px, 100%); background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 26px 22px; display: grid; gap: 14px; }
+    .logo { width: 44px; height: 44px; border-radius: 12px; background: var(--accent); display: grid; place-items: center; }
+    .logo i { width: 26px; height: 26px; border-radius: 50%; background: radial-gradient(circle, var(--accent) 0 14%, #111 15% 100%); box-shadow: inset 0 0 0 4px #1a1a1a; }
+    h1 { margin: 0; font-size: 21px; }
+    p { margin: 0; color: var(--text-2); }
+    strong { color: var(--text); }
+    form { display: grid; gap: 14px; }
+    label { display: grid; gap: 5px; color: var(--text-2); font-size: 13px; }
+    .campo { position: relative; }
+    input { width: 100%; font: inherit; color: var(--text); background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 11px 70px 11px 12px; }
+    input:focus { outline: 2px solid var(--accent); outline-offset: -1px; border-color: transparent; }
+    .ver { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: none; border: 0; color: var(--text-2); font: inherit; font-size: 13px; padding: 6px 8px; cursor: pointer; }
+    .ver:hover { color: var(--text); }
+    .primario { display: block; width: 100%; text-align: center; text-decoration: none; font: inherit; font-weight: 600; background: var(--text); color: #000; border: 0; border-radius: 999px; padding: 11px 16px; cursor: pointer; }
+    .primario:disabled { opacity: 0.5; cursor: default; }
+    .error { color: var(--bad); min-height: 1.2em; font-size: 13px; }
+    .ok { color: var(--ok); }
+    .nota { font-size: 13px; }
+    .espacio { margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <main class="tarjeta">
+    <div class="logo" aria-hidden="true"><i></i></div>
+
+    <div id="v-cargando"><p>Revisando el enlace…</p></div>
+
+    <div id="v-malo" hidden>
+      <h1>Enlace no válido</h1>
+      <p id="malo-texto" class="espacio">Este enlace ya no sirve: venció o ya se usó. Pide uno nuevo.</p>
+    </div>
+
+    <form id="v-form" hidden novalidate>
+      <div>
+        <h1>Pon tu contraseña nueva</h1>
+        <p class="espacio">Cuenta <strong id="nombre"></strong>. Se cerrará la sesión en tus aparatos y entrarás con esta.</p>
+      </div>
+      <input type="text" name="usuario" id="usuario" autocomplete="username" hidden readonly />
+      <label>Contraseña nueva
+        <span class="campo">
+          <input name="clave" type="password" autocomplete="new-password" minlength="8" maxlength="200" required />
+          <button type="button" class="ver" id="ver">Ver</button>
+        </span>
+      </label>
+      <label>Repítela
+        <span class="campo">
+          <input name="clave2" type="password" autocomplete="new-password" minlength="8" maxlength="200" required />
+        </span>
+      </label>
+      <p class="nota">Al menos 8 caracteres.</p>
+      <p class="error" role="alert"></p>
+      <button class="primario" id="guardar">Guardar contraseña</button>
+    </form>
+
+    <div id="v-listo" hidden>
+      <h1 class="ok">Listo</h1>
+      <p class="espacio">Tu contraseña quedó guardada. Abre Edowave y entra como <strong id="listo-nombre"></strong> con la nueva.</p>
+      <p class="espacio"><a class="primario" href="/">Abrir Edowave</a></p>
+    </div>
+  </main>
+
+  <script>
+    (() => {
+      const $ = (s) => document.querySelector(s);
+      const token = decodeURIComponent(location.hash.slice(1));
+      // Se quita el código de la barra de direcciones (no queda en el historial ni se copia por error).
+      history.replaceState(null, '', location.pathname);
+      const vistas = ['#v-cargando', '#v-malo', '#v-form', '#v-listo'];
+      const ver = (id) => vistas.forEach((v) => ($(v).hidden = v !== id));
+      const malo = (texto) => {
+        if (texto) $('#malo-texto').textContent = texto;
+        ver('#v-malo');
+      };
+      const pedir = async (ruta, body) => {
+        let r;
+        try {
+          r = await fetch(ruta, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        } catch {
+          throw new Error('No se pudo conectar. Revisa tu internet e inténtalo de nuevo.');
+        }
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok) throw Object.assign(new Error(d.error || 'Algo falló. Inténtalo de nuevo.'), { codigo: r.status });
+        return d;
+      };
+      if (!token) return malo('Falta el código del enlace. Ábrelo completo, tal como te llegó.');
+
+      const f = $('#v-form');
+      pedir('/api/clave/enlace', { token })
+        .then((d) => {
+          $('#nombre').textContent = d.nombre;
+          $('#usuario').value = d.nombre; // para que el gestor de contraseñas la guarde con su usuario
+          ver('#v-form');
+          f.clave.focus();
+        })
+        .catch((e) => malo(e.message));
+
+      $('#ver').onclick = () => {
+        const mostrar = f.clave.type === 'password';
+        f.clave.type = f.clave2.type = mostrar ? 'text' : 'password';
+        $('#ver').textContent = mostrar ? 'Ocultar' : 'Ver';
+      };
+
+      f.onsubmit = async (e) => {
+        e.preventDefault();
+        const err = $('.error', f);
+        const clave = f.clave.value;
+        if (clave.length < 8) return void (err.textContent = 'Usa al menos 8 caracteres.');
+        if (clave !== f.clave2.value) return void (err.textContent = 'Las dos contraseñas no son iguales.');
+        err.textContent = '';
+        $('#guardar').disabled = true;
+        try {
+          const d = await pedir('/api/clave/nueva', { token, clave });
+          $('#listo-nombre').textContent = d.nombre;
+          ver('#v-listo');
+        } catch (x) {
+          if (x.codigo === 404) malo(x.message);
+          else err.textContent = x.message;
+        } finally {
+          $('#guardar').disabled = false;
+        }
+      };
+    })();
+  </script>
+</body>
+</html>
