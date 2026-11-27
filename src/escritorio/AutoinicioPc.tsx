@@ -5,8 +5,8 @@ type Tauri = { core: { invoke: <T>(cmd: string, args?: Record<string, unknown>) 
 const tauri = () => (window as unknown as { __TAURI__?: Tauri }).__TAURI__;
 
 /**
- * Configuración, solo en la app de PC: "Este PC" (bandeja y notch; Discord está en Privacidad). "Abrir al iniciar Windows" ya no está aquí:
- * lo pregunta el instalador, como cualquier programa (la app no toca la carpeta de Inicio de Windows).
+ * Configuración, solo en la app de PC: "Este PC" (bandeja y notch; Discord está en Privacidad). Edowave no se abre al iniciar Windows: desde
+ * la 1.0.3 el instalador tampoco lo ofrece (un programa sin firma que arranca solo es lo que Defender marcaba).
  */
 export function AutoinicioPc() {
   if (!tauri()) return null;

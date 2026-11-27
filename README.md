@@ -10,7 +10,7 @@ Reproductor de música propio, con biblioteca compartida en un servidor y recome
 - **Web y iPhone (PWA):** [musica.empanados.io](https://musica.empanados.io).
 - Se necesita una cuenta en el servidor (por invitación).
 
-Free code signing provided by [SignPath.io](https://about.signpath.io/), certificate by [SignPath Foundation](https://signpath.org/). Ver la [Code signing policy](CODE_SIGNING.md) y la [política de privacidad](PRIVACY.md).
+Free code signing provided by [SignPath.io](https://about.signpath.io/), certificate by [SignPath Foundation](https://signpath.org/). Ver la [Code signing policy](CODE_SIGNING.md), los [términos de uso](TERMS.md) y la [política de privacidad](PRIVACY.md).
 
 ## Partes
 

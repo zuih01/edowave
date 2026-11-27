@@ -25,9 +25,11 @@ All members use multi-factor authentication on GitHub and SignPath.
 
 ## What the app does on the system
 
-- Installs for the current user only (no administrator rights), in `%LOCALAPPDATA%\Edowave`, with a Start menu shortcut and an uninstaller.
-- After installing it **asks** whether to open Edowave when Windows starts; if accepted, it adds a shortcut to the Startup folder. Uninstalling removes it.
-- It does not download or run other programs, does not change system settings and does not modify the registry beyond its own uninstall entry and the `HKCU\Software\Edowave` key.
+- Shows the [terms of use](TERMS.md), the privacy summary and the MIT license, which must be accepted before installing.
+- Installs in `C:\Program Files\Edowave` (Windows asks for administrator permission), with a Start menu shortcut, an optional desktop shortcut and an uninstaller listed in *Settings → Apps*.
+- Does **not** start with Windows, does not install other programs and does not change system settings. If Microsoft Edge WebView2 is missing, it only opens Microsoft's official download page.
+- Replaces previous per-user installations (up to 1.0.2) and removes their shortcuts, including the old "start with Windows" shortcut.
+- The uninstaller removes the app and its shortcuts and offers to delete the user's data.
 
 ## Privacy
 

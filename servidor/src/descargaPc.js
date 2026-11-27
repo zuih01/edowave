@@ -78,11 +78,13 @@ export function paginaDescargaPc(v, android) {
     ${boton}
     <div class="aviso">
       Es una versión de prueba y puede tener errores.<br />
-      Si al abrir el instalador Windows dice <b>“Windows protegió su PC”</b>, toca <b>Más información</b> y luego <b>Ejecutar de todas formas</b>.
+      Si al abrir el instalador Windows dice <b>“Windows protegió su PC”</b>, toca <b>Más información</b> y luego <b>Ejecutar de todas formas</b>.<br />
+      Al instalar, Windows pide permiso de administrador: Edowave se instala en Archivos de programa.
     </div>
     <nav class="pie" aria-label="Más información">
       <a href="https://github.com/zuih01/edowave" rel="noopener">Código abierto (GitHub, MIT)</a>
       <a href="https://github.com/zuih01/edowave/blob/main/CODE_SIGNING.md" rel="noopener">Code signing policy</a>
+      <a href="https://github.com/zuih01/edowave/blob/main/TERMS.md" rel="noopener">Términos de uso</a>
       <a href="https://github.com/zuih01/edowave/blob/main/PRIVACY.md" rel="noopener">Privacidad</a>
     </nav>
   </main>
