@@ -91,5 +91,6 @@ jobs:
           Copy-Item $origen.FullName $final
           $sha = (Get-FileHash $final -Algorithm SHA256).Hash.ToLower()
           $nota = if ($firmado) { "Instalador firmado (SignPath Foundation)." } else { "Instalador **sin firma digital**: Windows puede mostrar «Windows protegió su PC» (Más información → Ejecutar de todas formas)." }
-          $cuerpo = "Edowave $v para Windows 10 y 11.`n`n$nota`n`nSHA-256: ``$sha``"
+          $firma = "Code signing: free code signing provided by [SignPath.io](https://about.signpath.io/), certificate by [SignPath Foundation](https://signpath.org/). See the [code signing policy](https://github.com/zuih01/edowave/blob/main/CODE_SIGNING.md) and the [privacy policy](https://github.com/zuih01/edowave/blob/main/PRIVACY.md)."
+          $cuerpo = "Edowave $v para Windows 10 y 11.`n`n$nota`n`nSHA-256: ``$sha```n`n$firma"
           gh release create "v$v" $final --title "Edowave $v" --notes $cuerpo --verify-tag
