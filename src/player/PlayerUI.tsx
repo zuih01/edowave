@@ -1,6 +1,6 @@
 import { useParty } from '../server/party';
 import { useLayoutEffect, useRef, useState } from 'react';
-import { useVolumen } from './equalizer';
+import { useVolumen, volumenDelSistema } from './equalizer';
 import { Cover, fallbackBackground } from '../components/Cover';
 import {
   ChevronDownIcon,
@@ -36,6 +36,9 @@ import type { Track } from '../types';
 import { useAutomix } from './automixStore';
 import { useSocial } from '../server/social';
 import { useVinyl, Vinyl } from './Vinyl';
+import { BotonLetra, LetraHoja } from '../components/Letra';
+import { escritorioActivo } from '../escritorio/activo';
+import { empezarArrastre } from '../escritorio/seleccion';
 
 export function openPlayer() {
   usePlayer.getState().setExpanded(true);
@@ -153,9 +156,10 @@ export function FullPlayer() {
         <TitleAndRating />
         <SeekBar />
         <Controls />
-        <Volumen />
+        {!volumenDelSistema && <Volumen />}
       </div>
       {esAppNativa && <ColaHoja color={color} />}
+      <LetraHoja color={color} />
     </div>
   );
 }
@@ -172,6 +176,7 @@ function TitleAndRating() {
           {track.artist}
         </button>
       </div>
+      <BotonLetra track={track} />
       <button className={`icon-btn round-btn ${rating === -1 ? 'on' : ''}`} onClick={() => rate(track.id, -1)} aria-label="No me gusta">
         <ThumbDownIcon filled={rating === -1} />
       </button>
@@ -309,6 +314,7 @@ export function QueueList() {
   const index = usePlayer((s) => s.index);
   const playing = usePlayer((s) => s.playing);
   const { jumpTo, removeAt } = usePlayer.getState();
+  const pc = escritorioActivo();
   const upcoming = queue.length - index - 1;
   // La lista arranca en la canción que suena (las ya escuchadas quedan arriba, por si quieres volver a verlas).
   const lista = useRef<HTMLDivElement>(null);
@@ -334,6 +340,16 @@ export function QueueList() {
             ref={isCur ? actual : undefined}
             className={`track-row ${isCur ? 'current' : ''} ${i < index ? 'played' : ''}`}
             onClick={() => !isCur && jumpTo(i)}
+            // En PC: clic derecho abre el menú de la canción y se puede arrastrar a una playlist de la barra.
+            onContextMenu={
+              pc
+                ? (e) => {
+                    e.preventDefault();
+                    openTrackMenu(t);
+                  }
+                : undefined
+            }
+            onPointerDown={pc ? (e) => empezarArrastre(e, () => [t]) : undefined}
           >
             <div className="thumb-wrap">
               <Cover coverId={t.coverId} seed={t.album + t.artist} className="thumb" />

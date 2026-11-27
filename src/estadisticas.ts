@@ -37,6 +37,16 @@ export const aparato = (() => {
 })();
 export const versionApp: string = import.meta.env.VITE_VERSION_WEB || 'web';
 
+/**
+ * La versión que se muestra junto al perfil: "stable-1.0.0" (o "beta-…" si es de prueba). En la app de PC, la
+ * instalada; en la web, la última de la app (la de tauri.conf.json al compilar la web).
+ */
+export function etiquetaVersion(): string {
+  const v = (versionApp !== 'web' && /^\d+\.\d+\.\d+/.test(versionApp) ? versionApp : import.meta.env.VITE_VERSION_APP) || '';
+  if (!v) return '';
+  return /-/.test(v) ? v : `stable-${v}`;
+}
+
 // ---------------- Origen de cada escucha ----------------
 
 let siguiente: Origen | null = null;

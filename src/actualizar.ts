@@ -1,6 +1,7 @@
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import { create } from 'zustand';
 import { SERVIDOR_FIJO } from './server/cuenta';
+import { eventosHooks } from './server/social';
 
 /**
  * Solo en la app de Android: se actualiza sola cuando se publica una versión nueva en el servidor
@@ -82,4 +83,10 @@ export function iniciarActualizaciones() {
   // Un momento después de abrir (que primero cargue tu música) y cada vez que vuelves a la app.
   setTimeout(() => void revisar(), 4000);
   document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && void revisar());
+  // El servidor avisa en vivo cuando se publica una versión: se revisa al tiro.
+  eventosHooks.evento.push((ev) => {
+    if (ev.tipo !== 'version-nueva') return false;
+    if (ev.plataforma === 'android') void revisar();
+    return ev.plataforma === 'android';
+  });
 }

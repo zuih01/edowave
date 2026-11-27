@@ -139,6 +139,7 @@ document.querySelectorAll('[data-tab]').forEach((b) =>
     if (b.dataset.tab === 'categorias') cargarCategorias();
     if (b.dataset.tab === 'artistas') cargarArtistas();
     if (b.dataset.tab === 'estadisticas') cargarEstadisticas();
+    if (b.dataset.tab === 'bot') cargarBot();
   }),
 );
 
@@ -148,6 +149,7 @@ function cargarTodo() {
   cargarReportes();
   cargarCategorias();
   cargarArtistas();
+  cargarBot(); // para el aviso si el bot perdió la conexión con YouTube
 }
 
 // ---------------- Música ----------------
@@ -1295,3 +1297,185 @@ $('#art-colab-todas').addEventListener('click', async (e) => {
   cargarCanciones();
   cargarArtistas();
 });
+
+// ---------------- Bot de descargas (Billboard Sync) ----------------
+
+let botDatos = null;
+const hace = (iso) => (iso ? haceCuanto(Date.parse(iso)) : '');
+const enCuanto = (d) => {
+  if (!d) return 'sin programar';
+  const min = Math.round((Date.parse(d) - Date.now()) / 60000);
+  const txt = min < 60 ? `en ${Math.max(1, min)} min` : `en ${Math.round(min / 60)} h`;
+  return `${fecha(d)} (${txt})`;
+};
+
+async function cargarBot() {
+  try {
+    botDatos = await api('/api/admin/bot');
+  } catch (x) {
+    if (!$('[data-panel="bot"]').hidden) $('#bot-cuerpo').innerHTML = `<p class="vacio">${esc(x.message)}</p>`;
+    return;
+  }
+  const d = botDatos;
+  $('#bot-alerta').hidden = d.ok;
+  $('#bot-banner').hidden = d.ok;
+  if (!d.ok) {
+    const s = d.salud;
+    const desde = s && !s.ok && s.fallaDesde ? ` Falla desde ${fecha(s.fallaDesde)} (${hace(s.fallaDesde)}).` : '';
+    const mas = d.problemas.length > 1 ? ` (+${d.problemas.length - 1} más)` : '';
+    const deYtm = d.problemas[0].includes('YouTube Music');
+    const y = d.ytmusic;
+    const desdeYtm = y && !y.ok && y.fallaDesde ? ` Falla desde ${fecha(y.fallaDesde)} (${hace(y.fallaDesde)}).` : '';
+    $('#bot-banner-txt').textContent = deYtm ? `${d.problemas[0]}${desdeYtm}${mas}` : `Bot de descargas: ${d.problemas[0]}${desde}${mas}`;
+  }
+  if (!$('[data-panel="bot"]').hidden) pintarBot();
+}
+
+function pintarSaludBot(s) {
+  if (!s) return '<p class="vacio">Todavía no hay chequeo de conexión con YouTube.</p>';
+  const bien = s.ok && !s.vieja;
+  const titulo = s.ok ? (s.vieja ? 'El chequeo no se ha actualizado' : 'Conectado con YouTube') : 'Sin conexión con YouTube';
+  const pruebas = s.pruebas
+    .map((p) => `<li class="${p.ok ? 'ok' : 'mal'}"><span aria-hidden="true">${p.ok ? '✓' : '✗'}</span> <b>${esc(p.nombre)}</b> <span class="meta">${esc(p.detalle)} · ${p.segundos} s</span></li>`)
+    .join('');
+  const historial = s.historial
+    .map((h) => `<i class="${h.ok ? 'ok' : 'mal'}" title="${esc(fecha(h.hora))}: ${h.ok ? 'bien' : 'sin conexión'}"></i>`)
+    .join('');
+  return `<div class="bot-salud ${bien ? 'ok' : 'mal'}">
+      <div class="bot-salud-cab">
+        <span class="bot-punto" aria-hidden="true"></span>
+        <b>${titulo}</b>
+        <span class="meta">Último chequeo ${fecha(s.hora)} (${hace(s.hora)}) · próximo ${enCuanto(s.proxima)}</span>
+      </div>
+      ${!s.ok && s.fallaDesde ? `<p class="bot-falla">Falla desde ${fecha(s.fallaDesde)} (${hace(s.fallaDesde)}). Último chequeo bueno: ${s.ultimoOk ? fecha(s.ultimoOk) : 'nunca'}</p>` : ''}
+      <ul class="bot-pruebas">${pruebas}</ul>
+      <div class="bot-historial" title="Últimos chequeos (uno por hora), del más antiguo al más nuevo">${historial}</div>
+      <p class="meta">yt-dlp ${esc(s.ytDlp || '?')} · cookies de YouTube actualizadas ${s.cookies ? hace(s.cookies) : '—'} · ${s.bloqueadas} canciones bloqueadas en el registro del bot</p>
+    </div>`;
+}
+
+/** Cuánto del catálogo ya revisó el programa que pide YouTube Music (corre solo, de a una canción). */
+function avanceYtm(c) {
+  const hechas = (c.listas ?? 0) + (c.sin_video ?? 0) + (c.errores ?? 0);
+  const total = c.total || 0;
+  const pct = total ? Math.min(100, (100 * hechas) / total) : 0;
+  const faltan = Math.max(0, total - hechas);
+  const ritmo = c.ultima_hora ?? 0;
+  const eta = faltan === 0 ? 'Catálogo completo; solo renueva cada 30 días y pide lo que se sube.' : ritmo ? `Faltan ${faltan.toLocaleString('es-CL')} · ~${ritmo} por hora · termina en unas ${Math.ceil(faltan / ritmo)} h` : `Faltan ${faltan.toLocaleString('es-CL')}`;
+  return `<p class="meta"><b>${(c.listas ?? 0).toLocaleString('es-CL')}</b> canciones con radio y "Relacionado" guardados · revisadas ${hechas.toLocaleString('es-CL')} de ${total.toLocaleString('es-CL')} (${pct.toFixed(1)} %)</p>
+      <div class="ytm-barra" role="progressbar" aria-valuenow="${Math.round(pct)}" aria-valuemin="0" aria-valuemax="100"><i style="width:${pct.toFixed(1)}%"></i></div>
+      <p class="meta">${eta}</p>`;
+}
+
+/** API de recomendaciones de YouTube Music (no oficial): la usa el servidor para la radio y los Accesos directos. */
+function pintarSaludYtm(s) {
+  if (!s) return '';
+  if (!s.hora) return '<div class="bot-salud mal"><div class="bot-salud-cab"><span class="bot-punto" aria-hidden="true"></span><b>Recomendaciones de YouTube Music</b><span class="meta">Todavía no hay chequeo (corre cada hora).</span></div></div>';
+  const bien = s.ok && !s.vieja;
+  const titulo = s.ok ? (s.vieja ? 'YouTube Music: el chequeo no se ha actualizado' : 'API de YouTube Music funcionando') : 'La API de YouTube Music no responde';
+  const pruebas = s.pruebas
+    .map((p) => `<li class="${p.ok ? 'ok' : 'mal'}"><span aria-hidden="true">${p.ok ? '✓' : '✗'}</span> <b>${esc(p.nombre)}</b> <span class="meta">${esc(p.detalle)} · ${p.segundos} s</span></li>`)
+    .join('');
+  const historial = s.historial
+    .map((h) => `<i class="${h.ok ? 'ok' : 'mal'}" title="${esc(fecha(h.hora))}: ${h.ok ? 'bien' : 'falló'}"></i>`)
+    .join('');
+  const c = s.canciones ?? {};
+  return `<div class="bot-salud ${bien ? 'ok' : 'mal'}">
+      <div class="bot-salud-cab">
+        <span class="bot-punto" aria-hidden="true"></span>
+        <b>${titulo}</b>
+        <span class="meta">Último chequeo ${fecha(s.hora)} (${hace(s.hora)}) · uno por hora</span>
+      </div>
+      ${!s.ok && s.fallaDesde ? `<p class="bot-falla">Falla desde ${fecha(s.fallaDesde)} (${hace(s.fallaDesde)}). Último chequeo bueno: ${s.ultimoOk ? fecha(s.ultimoOk) : 'nunca'}. Mientras tanto, las recomendaciones siguen con lo ya guardado.</p>` : ''}
+      <ul class="bot-pruebas">${pruebas}</ul>
+      <div class="bot-historial" title="Últimas 48 horas, del más antiguo al más nuevo">${historial}</div>
+      ${avanceYtm(c)}
+      <p class="meta">${c.sin_video ?? 0} no están en YouTube Music · ${c.errores ?? 0} con error (se reintentan al día siguiente). No es una API oficial: si YouTube la cambia, aquí se ve en rojo.</p>
+    </div>`;
+}
+
+/** Botón "Descargar ahora" (solo playlists de usuarios y solo para zuih). No cambia el horario automático. */
+function botonIniciarBot(e) {
+  if (e.id !== 'importadas' || !soyDueno) return '';
+  const otraCorre = botDatos.ejecuciones.some((x) => x.id !== e.id && x.corriendo);
+  let texto = 'Baja todas las canciones que faltan de las playlists importadas, a máxima velocidad. Los horarios automáticos no cambian: si a las 4:00 sigue descargando, la de listas asignadas espera a que termine.';
+  if (e.corriendo) texto = e.manual ? 'Descargando todas las que faltan (iniciada con el botón)…' : 'Corre la descarga automática de las 16:00.';
+  else if (otraCorre) texto = 'Espera: ahora corre la de listas asignadas.';
+  return `<div class="bot-accion">
+      <button class="primario" data-bot-iniciar ${e.corriendo || otraCorre ? 'disabled' : ''}>${e.corriendo ? 'Descargando…' : 'Descargar ahora'}</button>
+      <span class="meta">${esc(texto)}</span>
+    </div>`;
+}
+
+function pintarEjecucionBot(e) {
+  const r = e.reporte;
+  const estado = e.corriendo ? '<span class="bot-tag corre">Corriendo ahora</span>' : e.fallo ? '<span class="bot-tag mal">Falló</span>' : '';
+  if (!r) {
+    return `<section class="bot-ej"><h3>${esc(e.nombre)} ${estado}</h3><p class="meta">${esc(e.detalle)}</p><p class="meta">Todavía no ha corrido. Próxima: ${enCuanto(e.proxima)}</p>${botonIniciarBot(e)}</section>`;
+  }
+  const fuentes = Object.entries(r.fuentes).map(([k, v]) => `${esc(k)}: ${v}`).join(' · ');
+  const conteo = Object.entries(r.conteo)
+    .sort((a, b) => b[1] - a[1])
+    .map(([k, v]) => `<span class="bot-chip">${esc(k)} <b>${v}</b></span>`)
+    .join('');
+  const lista = (titulo, items, conDetalle) =>
+    items.length
+      ? `<details><summary>${titulo}</summary><ul class="bot-lista">${items
+          .map((x) => `<li>${esc(x.artista)} — ${esc(x.cancion)}${conDetalle && x.detalle ? ` <span class="meta">${esc(x.detalle)}</span>` : ''}</li>`)
+          .join('')}</ul></details>`
+      : '';
+  return `<section class="bot-ej">
+      <h3>${esc(e.nombre)} ${estado}</h3>
+      <p class="meta">${esc(e.detalle)}</p>
+      <p class="meta">Última: ${fecha(r.hora)} (${hace(r.hora)})${r.detenidaPorHora ? ' · se detuvo a las 3:50 (sigue en la próxima)' : r.terminado ? '' : ' · <b>sin terminar</b>'} · próxima ${enCuanto(e.proxima)}</p>
+      ${botonIniciarBot(e)}
+      <div class="bot-cifras">
+        <div><b>${r.unicas}</b><span>canciones en las listas</span></div>
+        <div><b>${r.existentes}</b><span>ya en la biblioteca</span></div>
+        <div><b>${r.revisadas}/${r.faltantes}</b><span>faltantes revisadas</span></div>
+        ${r.maxBusquedas ? `<div><b>${r.busquedas ?? 0}/${r.maxBusquedas}</b><span>buscadas en YouTube</span></div>` : ''}
+        <div class="destacado"><b>${r.nBajadas}</b><span>bajadas a la biblioteca</span></div>
+      </div>
+      ${conteo ? `<div class="bot-chips">${conteo}</div>` : ''}
+      ${fuentes ? `<p class="meta">Fuentes: ${fuentes}</p>` : ''}
+      ${lista(`Canciones bajadas (${r.nBajadas})`, r.bajadas, false)}
+      ${lista(`No se pudieron bajar (${r.errores.length})`, r.errores, true)}
+    </section>`;
+}
+
+function pintarBot() {
+  const d = botDatos;
+  if (!d) return;
+  // El primer problema ya sale en el aviso de arriba; aquí la lista solo si hay más de uno.
+  const problemas = d.problemas.length > 1 ? `<ul class="bot-problemas">${d.problemas.map((p) => `<li>${esc(p)}</li>`).join('')}</ul>` : '';
+  $('#bot-cuerpo').innerHTML = problemas + pintarSaludBot(d.salud) + pintarSaludYtm(d.ytmusic) + d.ejecuciones.map(pintarEjecucionBot).join('');
+}
+
+$('#bot-recargar').addEventListener('click', cargarBot);
+$('#bot-cuerpo').addEventListener('click', async (ev) => {
+  const b = ev.target.closest('[data-bot-iniciar]');
+  if (!b) return;
+  // El diálogo de confirmación es rojo (pensado para borrar); aquí no se borra nada.
+  const si = $('#confirmar-si');
+  si.className = 'primario';
+  const ok = await confirmar('¿Descargar ahora las playlists?', 'Busca y baja todas las canciones que faltan de las playlists importadas, a máxima velocidad. Puede tardar horas y mientras tanto el servidor irá más lento. Los horarios automáticos no cambian.', 'Descargar ahora');
+  si.className = 'peligro';
+  if (!ok) return;
+  b.disabled = true;
+  try {
+    await api('/api/admin/bot/importadas/iniciar', { method: 'POST' });
+    aviso('Descarga de playlists iniciada');
+  } catch (x) {
+    aviso(x.message);
+  }
+  setTimeout(cargarBot, 2000);
+});
+// Mientras el bot corre y la pestaña está abierta, refrescar cada 20 s para ver el avance.
+setInterval(() => {
+  if (!$('[data-panel="bot"]').hidden && botDatos?.ejecuciones.some((e) => e.corriendo)) cargarBot();
+}, 20_000);
+$('#bot-banner-ver').addEventListener('click', () => $('[data-tab="bot"]').click());
+// Revisar cada 5 minutos, con el panel abierto en cualquier pestaña, para avisar si se cae la conexión.
+setInterval(() => {
+  if (!$('#v-panel').hidden) cargarBot();
+}, 5 * 60_000);

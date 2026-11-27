@@ -1,0 +1,95 @@
+# App de Windows: compila la interfaz (Vite) y la app con su instalador NSIS (Tauri 2) a partir del código de
+# este repositorio. Se ejecuta con cada etiqueta v* (v1.0.2, …) o a mano desde la pestaña Actions.
+#
+# Firma (SignPath Foundation): cuando el proyecto esté aprobado, guardar en Settings → Secrets and variables →
+# Actions el secreto SIGNPATH_API_TOKEN y las variables SIGNPATH_ORGANIZATION_ID, SIGNPATH_PROJECT_SLUG y
+# SIGNPATH_SIGNING_POLICY_SLUG. Mientras no estén, el instalador queda sin firmar como artefacto.
+name: App de Windows
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    env:
+      CARGO_TERM_COLOR: always
+      FIRMAR: ${{ secrets.SIGNPATH_API_TOKEN != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: escritorio-pc/app/src-tauri
+
+      - name: Versión
+        id: version
+        shell: pwsh
+        run: |
+          $v = (Get-Content escritorio-pc/app/src-tauri/tauri.conf.json -Raw | ConvertFrom-Json).version
+          if ($env:GITHUB_REF_TYPE -eq 'tag' -and $env:GITHUB_REF_NAME -ne "v$v") {
+            throw "La etiqueta $env:GITHUB_REF_NAME no coincide con la versión de tauri.conf.json ($v)"
+          }
+          "version=$v" >> $env:GITHUB_OUTPUT
+
+      - name: Dependencias
+        run: npm ci --no-audit --no-fund
+
+      - name: Interfaz de PC (Vite)
+        env:
+          VITE_SERVIDOR: https://musica.empanados.io
+          VITE_PLATAFORMA: pc
+          VITE_VERSION_WEB: ${{ steps.version.outputs.version }}
+        run: npx vite build --outDir dist-pc --emptyOutDir
+
+      - name: App y su instalador (Tauri, NSIS)
+        working-directory: escritorio-pc/app
+        run: npx tauri build --bundles nsis
+
+      - name: Guardar el instalador sin firmar
+        id: sin-firmar
+        uses: actions/upload-artifact@v4
+        with:
+          name: Edowave-${{ steps.version.outputs.version }}-sin-firmar
+          path: escritorio-pc/app/src-tauri/target/release/bundle/nsis/*-setup.exe
+          if-no-files-found: error
+
+      - name: Firmar con SignPath
+        if: env.FIRMAR == 'true'
+        uses: signpath/github-action-submit-signing-request@v1
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
+          github-artifact-id: ${{ steps.sin-firmar.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: firmado
+
+      - name: Publicar en Releases (solo con etiqueta)
+        if: github.ref_type == 'tag'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $v = '${{ steps.version.outputs.version }}'
+          $firmado = $env:FIRMAR -eq 'true'
+          $origen = if ($firmado) { Get-ChildItem firmado -Filter *-setup.exe | Select-Object -First 1 } else { Get-ChildItem escritorio-pc/app/src-tauri/target/release/bundle/nsis -Filter *-setup.exe | Select-Object -First 1 }
+          $final = "Edowave-Setup-$v.exe"
+          Copy-Item $origen.FullName $final
+          $sha = (Get-FileHash $final -Algorithm SHA256).Hash.ToLower()
+          $nota = if ($firmado) { "Instalador firmado (SignPath Foundation)." } else { "Instalador **sin firma digital**: Windows puede mostrar «Windows protegió su PC» (Más información → Ejecutar de todas formas)." }
+          $cuerpo = "Edowave $v para Windows 10 y 11.`n`n$nota`n`nSHA-256: ``$sha``"
+          gh release create "v$v" $final --title "Edowave $v" --notes $cuerpo --verify-tag

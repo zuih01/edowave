@@ -31,6 +31,10 @@ export const useNav = create<NavState>((set) => ({
   adelante: [],
   setTab: (tab) => set({ tab, stack: [], adelante: [] }),
   push: (p) => {
+    // Si ya estás en esa misma pantalla (tocar Configuración o la misma playlist otra vez), no se abre de nuevo:
+    // si no, "atrás" había que apretarlo una vez por cada toque.
+    const arriba = useNav.getState().stack.at(-1);
+    if (arriba && JSON.stringify(arriba) === JSON.stringify(p)) return;
     history.pushState(null, '');
     set((s) => ({ stack: [...s.stack, p], adelante: [] }));
   },

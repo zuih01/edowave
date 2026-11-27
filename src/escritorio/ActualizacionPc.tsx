@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { eventosHooks } from '../server/social';
 
 /**
  * App de PC (Tauri): avisa cuando hay una versión nueva publicada. "Descargar" abre la página de descarga en el
@@ -9,7 +10,18 @@ import { useEffect, useState } from 'react';
 type Tauri = { core: { invoke: <T>(cmd: string, args?: Record<string, unknown>) => Promise<T> } };
 const tauri = () => (window as unknown as { __TAURI__?: Tauri }).__TAURI__;
 
-const CADA = 6 * 60 * 60 * 1000; // con la app abierta mucho rato, vuelve a revisar cada 6 h
+/**
+ * Cuándo se revisa: al abrir, apenas el servidor avisa que se publicó una versión (aviso en vivo "version-nueva"),
+ * al reconectarse, al volver a la ventana y, por si acaso, cada 15 min.
+ */
+const CADA = 15 * 60 * 1000;
+let alAvisar: (() => void) | null = null;
+eventosHooks.evento.push((ev) => {
+  if (ev.tipo !== 'version-nueva') return false;
+  if (ev.plataforma === 'pc') alAvisar?.();
+  return ev.plataforma === 'pc';
+});
+eventosHooks.conectado.push(() => alAvisar?.());
 
 export function ActualizacionPc() {
   const [nueva, setNueva] = useState<string | null>(null);
@@ -20,18 +32,32 @@ export function ActualizacionPc() {
   useEffect(() => {
     const t = tauri();
     if (!t) return;
-    const revisar = () =>
+    let ultima = 0;
+    const revisar = () => {
+      if (Date.now() - ultima < 3000) return; // varios motivos juntos: una sola consulta
+      ultima = Date.now();
       t.core
         .invoke<string | null>('buscar_actualizacion')
-        .then((v) => v && setNueva(v))
+        .then((v) => {
+          if (v && v !== nueva) {
+            setNueva(v);
+            setOculto(false); // una versión todavía más nueva vuelve a avisar aunque hayas dicho "Más tarde"
+            setEstado('aviso');
+          }
+        })
         .catch(() => {}); // sin conexión: se intenta la próxima vez
+    };
+    alAvisar = revisar;
     const primera = setTimeout(revisar, 4000);
     const cada = setInterval(revisar, CADA);
+    window.addEventListener('focus', revisar);
     return () => {
+      alAvisar = null;
       clearTimeout(primera);
       clearInterval(cada);
+      window.removeEventListener('focus', revisar);
     };
-  }, []);
+  }, [nueva]);
 
   if (!nueva || oculto) return null;
   const descargar = () => {

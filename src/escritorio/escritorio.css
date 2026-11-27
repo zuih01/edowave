@@ -2,6 +2,16 @@
    Misma paleta, íconos y animaciones que la app del teléfono; solo cambia la distribución. */
 
 .app.esc-raiz { max-width: none; margin: 0; background: #000; user-select: none; }
+
+/* App de PC: ventana con esquinas redondeadas (como Finder en macOS). La ventana de Windows es transparente; aquí se
+   recorta todo (también los menús y velos fijos) con un borde redondo y una línea fina para que se note el canto.
+   Maximizada, recta. */
+html[data-app-pc], html[data-app-pc] body { background: transparent !important; }
+html[data-app-pc]:not([data-maximizada]) body { clip-path: inset(0 round 20px); }
+html[data-app-pc]:not([data-maximizada]) body::after {
+  content: ''; position: fixed; inset: 0; border-radius: 20px; pointer-events: none; z-index: 2147483647;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.09);
+}
 .esc {
   --hueco: 8px;
   --abajo-h: 84px;
@@ -621,3 +631,53 @@ body.arrastrando, body.arrastrando * { cursor: grabbing !important; user-select:
 .esc-res-top > .esc-res-texto { flex: 1; min-width: 0; }
 /* El perfil usa todo el ancho y alto del centro (el fondo de color llega a los bordes) */
 .esc-centro .detail.perfil { max-width: none; margin: 0; min-height: 100%; }
+
+/* ---------- Letra en PC: ocupa todo el centro, con la carátula animada de fondo; la fila o "sonando ahora" siguen a la derecha ---------- */
+.esc-letra { --tinte: #2a2a3a; grid-area: centro; margin: 0; position: relative; z-index: 25; min-height: 0; overflow: hidden; border-radius: 12px; display: flex; flex-direction: column;
+  background: #121212; isolation: isolate; animation: esc-vista-entra 0.28s var(--ease-out, ease-out); }
+.esc-letra > :not(.fondo-letra) { position: relative; z-index: 1; }
+.esc-letra-cab { display: flex; align-items: baseline; gap: 12px; padding: 20px 28px 6px clamp(32px, 6vw, 96px); color: #fff; flex: none; }
+.esc-letra-cab strong { font-size: 16px; font-weight: 800; }
+.esc-letra-cab span { flex: 1; color: rgba(255, 255, 255, 0.7); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.esc-letra-cab .icon-btn { align-self: center; }
+.esc-letra .letra-caja { padding: 0 clamp(32px, 6vw, 96px); scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 48px, #000 calc(100% - 80px), transparent 100%); mask-image: linear-gradient(180deg, transparent 0, #000 48px, #000 calc(100% - 80px), transparent 100%); }
+.esc-letra .letra-linea { font-size: clamp(28px, 2.9vw, 42px); padding: 10px 0; max-width: 980px; }
+.esc-letra .letra-linea.pausa { padding: 18px 0 18px 2px; }
+.esc-letra .letra-linea.pausa span { width: 15px; height: 15px; }
+.esc-letra .letra-linea.plana { font-size: 26px; }
+.esc-letra .letra-relleno { height: 40px; }
+.esc-letra .letra-estado { font-size: 20px; }
+@media (max-width: 860px) { .esc-letra .letra-caja { padding: 0 24px; } }
+
+/* ---------------- Party en el panel de la derecha (como la Jam de Spotify) ---------------- */
+.esc-derecha .party-panel { height: 100%; min-height: 0; display: flex; flex-direction: column; color: var(--text); }
+.esc-derecha .party-panel .party-scroll { padding: 0 14px 16px; scrollbar-width: thin; scrollbar-color: #4a4a4a transparent; }
+.esc-derecha .party-panel .party-titulo { text-align: left; font-size: 22px; margin: 2px 0 10px; }
+.esc-derecha .party-panel .party-quienes, .esc-derecha .party-panel .party-acciones { justify-content: flex-start; }
+.esc-derecha .party-panel .party-acciones { margin: 12px 0 10px; }
+.esc-derecha .party-panel .party-pill { min-height: 32px; padding: 0 14px; font-size: 13px; }
+.esc-derecha .party-panel .party-pill.on { background: #fff; color: #000; border-color: #fff; }
+.esc-derecha .party-panel .party-seccion h3, .esc-derecha .party-panel .party-h3 { font-size: 15px; }
+.esc-derecha .party-panel .party-agregar { min-height: 32px; padding: 0 14px; font-size: 13px; }
+.esc-derecha .party-panel .party-fila { min-height: 54px; padding: 0 6px; border-radius: 6px; gap: 10px; }
+.esc-derecha .party-panel .party-fila:hover { background: rgba(255, 255, 255, 0.07); }
+.esc-derecha .party-panel .party-fila .thumb { width: 40px; height: 40px; }
+.esc-derecha .party-panel .party-fila .icon-btn { width: 32px; height: 32px; opacity: 0; transition: opacity 0.15s; }
+.esc-derecha .party-panel .party-fila:hover .icon-btn, .esc-derecha .party-panel .party-orden.levantada .icon-btn { opacity: 1; }
+.esc-derecha .party-panel .party-fila .party-asa-mover { opacity: 0; transition: opacity 0.15s; }
+.esc-derecha .party-panel .party-fila:hover .party-asa-mover, .esc-derecha .party-panel .party-orden.levantada .party-asa-mover { opacity: 1; }
+.esc-derecha .party-panel .party-top { padding: 10px 8px 4px; }
+.esc-derecha .party-panel .party-buscar { margin-top: 4px; }
+/* La caja de invitar: el enlace, el QR y el permiso para los invitados, dentro del mismo panel. */
+.party-invitar-caja { background: #1f1f1f; border-radius: 10px; padding: 12px 14px 4px; margin: 4px 0 12px; }
+.party-invitar-cab { display: flex; align-items: center; justify-content: space-between; font-size: 14px; }
+.party-invitar-cab .icon-btn { width: 28px; height: 28px; }
+.party-invitar-caja .party-invitar { padding: 12px 0 6px; gap: 14px; }
+.party-invitar-caja .party-invitar-txt { display: none; }
+.party-invitar-caja .party-compartir { min-height: 40px; font-size: 14px; padding: 0 20px; }
+.party-invitar-caja .party-qr-fila { padding-top: 12px; }
+.party-invitar-caja > .party-ajuste { border-top: 1px solid #333; font-size: 13.5px; }
+html[data-claro] .party-invitar-caja { background: rgba(0, 0, 0, 0.05); }
+.esc-derecha .party-panel .party-seccion h3 { white-space: nowrap; }
+.esc-derecha .party-panel .party-agregar { flex: none; white-space: nowrap; }

@@ -50,6 +50,9 @@ export async function leerDatos(ruta, nombreOriginal) {
     contenedor: fmt.format_name ?? '',
     // OGG/Opus guardan las etiquetas en la pista de audio, no en el archivo
     etiquetasEnPista: !Object.keys(fmt.tags ?? {}).length && !!Object.keys(audio.tags ?? {}).length,
+    // Artista y título salieron del nombre "A - B" (sin etiquetas): quien sube puede orientarlo (ver orientarNombre).
+    desdeNombre: !tags.title && !tags.artist && partes.length > 1,
+    partesNombre: partes.map((p) => p.trim()).filter(Boolean),
   };
 }
 

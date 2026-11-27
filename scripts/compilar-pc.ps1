@@ -13,7 +13,7 @@
 #   6. REVISIÓN CON WINDOWS DEFENDER: si marca la app o el instalador, NO se publica (y lo dice).
 # Si algo falla, dice en qué paso fue y muestra el error (también queda en pc\ultimo-error.log).
 #
-# Con -Publicar: sube SOLA la versión (beta.N → beta.N+1) antes de compilar, y al final sube el instalador al VPS:
+# Con -Publicar: sube SOLA la versión (1.0.0 → 1.0.1; en betas, beta.N → beta.N+1) antes de compilar, y al final sube el instalador al VPS:
 # queda para descargar en https://musica.empanados.io/download-beta y las apps instaladas muestran "Hay una versión
 # nueva → Descargar" (abre esa página). Con -Version 0.9.0-beta.80 se usa esa versión exacta.
 #   Uso: compilar-pc.cmd -Publicar
@@ -76,9 +76,10 @@ try {
   if (-not $Version) {
     $Version = $Actual
     if ($Publicar) {
-      # beta.N → beta.N+1 (así nunca se publica dos veces el mismo número).
-      if ($Actual -notmatch '^(.*-beta\.)(\d+)$') { throw "No sé subir la versión '$Actual': usa -Version" }
-      $Version = $Matches[1] + ([int]$Matches[2] + 1)
+      # Estable: 1.0.0 → 1.0.1. Beta: beta.N → beta.N+1. (Así nunca se publica dos veces el mismo número.)
+      if ($Actual -match '^(\d+\.\d+\.)(\d+)$') { $Version = $Matches[1] + ([int]$Matches[2] + 1) }
+      elseif ($Actual -match '^(.*-beta\.)(\d+)$') { $Version = $Matches[1] + ([int]$Matches[2] + 1) }
+      else { throw "No sé subir la versión '$Actual': usa -Version" }
     }
   }
   if ($Version -ne $Actual) {

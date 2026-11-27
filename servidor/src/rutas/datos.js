@@ -21,11 +21,13 @@ import {
   MOODS,
   radio,
   radioChain,
+  motivoRadio,
   rediscover,
   shortcuts,
   shufflePool,
 } from '../reco/motor.js';
 import { hoyLocal, listasPersonales, registrarMostradas, resultadosDe, vecinosActuales } from '../reco/aprendizaje.js';
+import { asegurarRelaciones, avisarYtmusic, ytmActual } from '../datos/ytmusic.js';
 
 /**
  * Los datos de cada usuario y lo que se calcula con ellos, TODO en el servidor:
@@ -263,7 +265,7 @@ async function modeloParaBuscar(uid) {
 }
 
 async function armarModelo(uid, c, bb) {
-  const [p, v, resultados] = await Promise.all([
+  const [p, v, resultados, b] = await Promise.all([
     db.query(
       `SELECT cancion, extract(epoch FROM empezo) * 1000 AS empezo, escuchado, duracion, completa, saltada, anterior
          FROM escuchas WHERE usuario_id = $1 ORDER BY empezo`,
@@ -271,7 +273,10 @@ async function armarModelo(uid, c, bb) {
     ),
     db.query('SELECT cancion, valor FROM valoraciones WHERE usuario_id = $1', [uid]),
     resultadosDe(uid),
+    db.query('SELECT busquedas FROM estado_usuario WHERE usuario_id = $1', [uid]).catch(() => ({ rows: [] })),
   ]);
+  // Lo que buscaste y tocaste hace poco (las últimas 12): también cuenta como punto de partida para recomendarte.
+  const buscadas = (b.rows[0]?.busquedas?.tracks ?? []).filter((x) => typeof x === 'string').slice(0, 12);
   const plays = p.rows.map((x) => ({
     trackId: x.cancion,
     startedAt: Number(x.empezo),
@@ -282,7 +287,7 @@ async function armarModelo(uid, c, bb) {
     prevTrackId: x.anterior ?? undefined,
   }));
   const ratings = Object.fromEntries(v.rows.map((x) => [x.cancion, x.valor]));
-  const model = buildModel({ tracks: c.tracks, plays, ratings, features: c.features, billboard: bb, now: Date.now(), vecinos: vecinosActuales(), resultados });
+  const model = buildModel({ tracks: c.tracks, plays, ratings, features: c.features, billboard: bb, now: Date.now(), vecinos: vecinosActuales(), ytm: ytmActual(c.tracks), buscadas, resultados });
   return model;
 }
 
@@ -356,12 +361,16 @@ export default async function rutasDatos(app) {
 
   /** Siguientes canciones de la radio: parecidas a las últimas que sonaron (`semillas`), sin repetir `excluir`. */
   app.post('/api/radio', { preHandler: requiereUsuario }, async (req) => {
-    const m = await modeloDe(req.usuario.id);
+    // La canción con que parte la radio: si YouTube Music todavía no la tiene, se le pregunta ahora (hasta 5 s).
+    const ancla = req.body?.desde ? String(req.body.desde) : listaIds(req.body?.semillas, 12)[0];
+    const [m] = await Promise.all([modeloDe(req.usuario.id), ancla ? asegurarRelaciones(ancla) : null]);
     const n = Math.max(1, Math.min(30, Number(req.body?.n) || 5));
     const ids = req.body?.desde
       ? radioChain(m, String(req.body.desde), n)
       : radio(m, listaIds(req.body?.semillas, 12), new Set(listaIds(req.body?.excluir, 2000)), n);
-    registrarMostradas(req.usuario.id, 'radio', ids.map((id) => ({ id, motivo: 'radio' })));
+    // Se anota de dónde salió cada una (YouTube Music o el algoritmo propio): según lo que termines o saltes, tu
+    // cuenta aprende cuánto confiar en YouTube Music (ver `confianzaEnYoutube`).
+    registrarMostradas(req.usuario.id, 'radio', ids.map((id) => ({ id, motivo: ancla ? motivoRadio(m, ancla, id) : 'radio' })));
     return { ids };
   });
 
@@ -449,6 +458,7 @@ export default async function rutasDatos(app) {
       else await db.query('DELETE FROM valoraciones WHERE usuario_id = $1 AND cancion = $2', [req.usuario.id, cancion]);
     }
     olvidar(req.usuario.id);
+    avisarYtmusic(); // lo que te gustó se pide pronto a YouTube Music
     return { ok: true };
   });
 

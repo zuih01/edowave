@@ -4,13 +4,14 @@ import { TemasPc } from '../escritorio/TemasPc';
 import { diagClear, diagEntries, diagText } from '../diag';
 import { openEqualizer, PanelEcualizador } from '../components/Equalizer';
 import { useEscritorio } from '../escritorio/activo';
-import { AutomixIcon, ChevronRightIcon, EqualizerIcon, InfoIcon, LevelIcon, RackIcon, RadioIcon, VinylIcon, HeadphonesIcon } from '../components/Icons';
+import { AutomixIcon, ChevronRightIcon, EqualizerIcon, InfoIcon, LevelIcon, RackIcon, RadioIcon, VinylIcon, HeadphonesIcon, PeopleIcon } from '../components/Icons';
 import { useLeveler } from '../player/loudness';
 import { AUTOMIX_VISIBLE, useAutomix } from '../player/automixStore';
 import { toggleMode } from '../components/ModeConfirm';
 import { showSnack } from '../components/PlaylistSheets';
 import { useCuenta } from '../server/cuenta';
-import { cambiarPrivacidad, useSocial } from '../server/social';
+import { cambiarMostrarAmigos, cambiarPrivacidad, useSocial } from '../server/social';
+import { DiscordPc } from '../escritorio/DiscordPc';
 import { openRack } from '../components/Rack';
 import { ECHO_MODES, useRack } from '../player/rack';
 import { useVinyl, viniloDisponible } from '../player/Vinyl';
@@ -44,6 +45,8 @@ export function Settings() {
   const compartirEstado = useSocial((s) => s.compartir);
   const compartir = compartirEstado !== false;
   const compartirCargando = conectado && compartirEstado === null;
+  const mostrarAmigosEstado = useSocial((s) => s.mostrarAmigos);
+  const mostrarAmigos = mostrarAmigosEstado !== false;
   const presetName = preset === 'custom' ? 'Personalizado' : (allPresets(saved).find((p) => p.id === preset)?.name ?? '');
 
   return (
@@ -82,6 +85,39 @@ export function Settings() {
           <span />
         </span>
       </button>
+      <button
+        className="settings-row"
+        role="switch"
+        aria-checked={mostrarAmigos}
+        disabled={!conectado || mostrarAmigosEstado === null}
+        onClick={async () => {
+          try {
+            await cambiarMostrarAmigos(!mostrarAmigos);
+            showSnack(mostrarAmigos ? 'Tus amigos ya no se ven en tu perfil' : 'Tus amigos se ven en tu perfil');
+          } catch {
+            showSnack('No se pudo cambiar. Revisa la conexión.');
+          }
+        }}
+      >
+        <span className="settings-icon">
+          <PeopleIcon />
+        </span>
+        <span className="track-text">
+          <span className="settings-label">Mostrar mis amigos en mi perfil</span>
+          <span className="settings-sub">
+            {!conectado
+              ? 'Inicia sesión para usarlo'
+              : mostrarAmigos
+                ? 'Quien abra tu perfil ve tu lista de amigos'
+                : 'Nadie más ve tu lista de amigos (tú sí, en tu perfil)'}
+          </span>
+        </span>
+        <span className={`switch ${mostrarAmigos ? 'on' : ''}`} aria-hidden="true">
+          <span />
+        </span>
+      </button>
+      {/* Solo en la app de PC */}
+      <DiscordPc />
 
       <h3 className="settings-group">Sonido</h3>
       {escritorio ? (
@@ -99,9 +135,12 @@ export function Settings() {
               <span />
             </span>
           </button>
-          <div className={`settings-eq ${enabled ? '' : 'apagado'}`}>
-            <PanelEcualizador />
-          </div>
+          {/* Apagado, se esconde: se ve recién al activarlo. */}
+          {enabled && (
+            <div className="settings-eq">
+              <PanelEcualizador />
+            </div>
+          )}
         </>
       ) : (
       <button className="settings-row" onClick={openEqualizer}>
@@ -231,6 +270,8 @@ export function Settings() {
  * cuando algo falla en el teléfono.
  */
 function DiagSection() {
+  // El registro técnico es para diagnosticar: solo lo ven las cuentas con acceso al panel.
+  const panel = useCuenta((s) => !!s.token && s.panel);
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [, refresh] = useState(0);
@@ -240,6 +281,8 @@ function DiagSection() {
       <TemasPc />
       <AutoinicioPc />
 
+      {panel && (
+      <>
       <h3 className="settings-group">Ayuda</h3>
       <button className="settings-row" onClick={() => setOpen(!open)}>
         <span className="settings-icon">
@@ -280,6 +323,8 @@ function DiagSection() {
           </div>
           <pre className="diag-text">{text}</pre>
         </div>
+      )}
+      </>
       )}
     </>
   );

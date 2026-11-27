@@ -1,12 +1,13 @@
 import { create } from 'zustand';
 import { sincronizarBiblioteca } from '../library/store';
 import { esDelServidor } from './biblioteca';
-import { juntosHooks, partyHooks, playIdAt, playerPos, trackById, usePlayer } from '../player/player';
+import { colaRecuperada, juntosHooks, partyHooks, playIdAt, playIndexAt, playerPos, trackById, usePlayer } from '../player/player';
 import { api, useCuenta } from './cuenta';
 import { dejarDeEscuchar, eventosHooks, useSocial } from './social';
 import { showSnack } from '../components/PlaylistSheets';
 import { closeAllOverlaysThen, openOverlay } from '../nav';
 import type { Track } from '../types';
+import { escritorioActivo } from '../escritorio/activo';
 
 /**
  * Party: escuchar en grupo con una fila compartida (como la Jam de Spotify). Ver servidor/src/rutas/party.js.
@@ -35,7 +36,13 @@ export interface PartyEstado {
   yo: number;
   miembros: MiembroParty[];
   agregadas: Agregada[];
-  sonando: { cancion: string; por: number | null; posicion: number; sonando: boolean; hace: number } | null;
+  sonando: {
+    cancion: string;
+    por: number | null;
+    posicion: number;
+    sonando: boolean;
+    hace: number;
+  } | null;
   proximas: string[];
   contexto: string | null;
   ajustes: { controlar: boolean };
@@ -58,9 +65,17 @@ interface Store {
   vistas: VistaParty[];
   /** Invitación por abrir: "¿Quieres unirte a la Party de …?" */
   unirse: InfoParty | null;
+  /** En PC la Party se ve en el panel de la derecha (como la Jam de Spotify), no en una ventana encima. */
+  panelPc: boolean;
 }
 
-export const useParty = create<Store>(() => ({ party: null, recibido: 0, vistas: [], unirse: null }));
+export const useParty = create<Store>(() => ({
+  party: null,
+  recibido: 0,
+  vistas: [],
+  unirse: null,
+  panelPc: false,
+}));
 
 export const soyAnfitrion = (p = useParty.getState().party) => !!p && p.anfitrion.id === p.yo;
 const miModo = (p = useParty.getState().party) => p?.miembros.find((m) => m.id === p.yo)?.modo ?? 'telefono';
@@ -104,7 +119,12 @@ function apagarModos() {
   if (pl.shuffle) {
     const queue = pl.originalQueue ?? pl.queue;
     const cur = pl.queue[pl.index];
-    usePlayer.setState({ shuffle: false, originalQueue: null, queue, index: Math.max(0, queue.indexOf(cur)) });
+    usePlayer.setState({
+      shuffle: false,
+      originalQueue: null,
+      queue,
+      index: Math.max(0, queue.indexOf(cur)),
+    });
   }
 }
 partyHooks.sinModos = () => {
@@ -118,8 +138,18 @@ function poner(party: PartyEstado | null) {
   if (party && !antes) apagarModos();
   // Terminó: se cierran sus pantallas (pasando por el historial, para que "atrás" no quede con capas fantasma).
   if (!party && useParty.getState().vistas.length) closeAllOverlaysThen(() => {});
-  useParty.setState({ party, recibido: Date.now(), ...(party ? {} : { vistas: [] }) });
-  if (party) guardar({ codigo: party.codigo, anfitrion: soyAnfitrion(party), modo: miModo(party), en: Date.now() });
+  useParty.setState({
+    party,
+    recibido: Date.now(),
+    ...(party ? {} : { vistas: [], panelPc: false }),
+  });
+  if (party)
+    guardar({
+      codigo: party.codigo,
+      anfitrion: soyAnfitrion(party),
+      modo: miModo(party),
+      en: Date.now(),
+    });
   else guardar(null);
   if (!party) return;
   if (sigoAlAnfitrion(party)) void seguir();
@@ -130,6 +160,7 @@ function poner(party: PartyEstado | null) {
 // ---------------- Pantallas ----------------
 
 export function abrirVista(v: VistaParty) {
+  if (escritorioActivo() && v === 'party') return useParty.setState({ panelPc: true });
   const { vistas } = useParty.getState();
   if (vistas.includes(v)) return;
   useParty.setState({ vistas: [...vistas, v] });
@@ -171,7 +202,7 @@ export async function iniciarParty(track?: Track) {
   if (actual && !soyAnfitrion(actual)) await salirDeParty();
   if (useSocial.getState().siguiendo !== null) dejarDeEscuchar();
   if (track) {
-    if (!esDelServidor(track.id)) return showSnack('Esa canción está solo en este aparato: elige una del servidor');
+    if (!esDelServidor(track.id)) return showSnack('Esa canción está solo en este dispositivo: elige una del servidor');
     const p = usePlayer.getState();
     if (p.queue[p.index] !== track.id) p.playTracks([track], 0, { shuffle: false });
     else if (!p.playing) p.toggle();
@@ -208,7 +239,9 @@ function tomarAgregada(): string | null {
     uidSonando = a.uid;
     uidPorContar = a.uid;
     // Sale de la fila al tiro (el servidor confirma con el próximo estado).
-    useParty.setState({ party: { ...p, agregadas: p.agregadas.filter((x) => x.uid !== a.uid) } });
+    useParty.setState({
+      party: { ...p, agregadas: p.agregadas.filter((x) => x.uid !== a.uid) },
+    });
     return a.cancion;
   }
   return null;
@@ -235,6 +268,13 @@ function contarAhora() {
   if (!p || !soyAnfitrion(p)) return;
   const s = usePlayer.getState();
   const id = s.queue[s.index];
+  // Recién recargada la página: mientras se retoma lo que sonaba, no se cuenta "nada" ni "en pausa" (los invitados
+  // se pausaban un rato). Se vuelve a contar en cuanto suena esa canción, o al acabarse el plazo.
+  if (retomando) {
+    const listo = id === retomando.cancion && (s.playing || !retomando.sonando);
+    if (listo || Date.now() > retomando.hasta) retomando = null;
+    else return;
+  }
   const body = {
     cancion: id && esDelServidor(id) ? id : null,
     uid: uidPorContar ?? undefined,
@@ -254,6 +294,37 @@ function contarAhora() {
     });
 }
 
+/** Anfitrión que recargó la página: lo que el servidor sabía que sonaba (para seguir desde ahí, sin pausar). */
+let retomando: { cancion: string; sonando: boolean; hasta: number } | null = null;
+
+/**
+ * El anfitrión volvió (recargó la página o se reconectó) y la Party seguía: retoma la canción que sonaba, en el
+ * segundo en que iba, sin avisar antes una pausa a los invitados. Espera a que se recupere la cola (hasta 10 s).
+ */
+async function retomarComoAnfitrion(p: PartyEstado) {
+  const e = p.sonando;
+  const pl0 = usePlayer.getState();
+  if (!e || (pl0.queue[pl0.index] === e.cancion && pl0.playing === e.sonando)) return;
+  const desde = Date.now();
+  retomando = { cancion: e.cancion, sonando: e.sonando, hasta: desde + 12_000 };
+  for (let i = 0; i < 40 && (!colaRecuperada() || !trackById(e.cancion)); i++) await new Promise((ok) => setTimeout(ok, 250));
+  if (!retomando || !trackById(e.cancion)) {
+    retomando = null;
+    return;
+  }
+  const objetivo = e.posicion + (e.sonando ? (e.hace + (Date.now() - desde)) / 1000 : 0);
+  const pl = usePlayer.getState();
+  let i = pl.queue[pl.index] === e.cancion ? pl.index : pl.queue.indexOf(e.cancion);
+  if (i < 0) {
+    // No está en la cola recuperada: se pone justo donde va.
+    const queue = [...pl.queue];
+    i = Math.min(queue.length, pl.index + (queue.length ? 1 : 0));
+    queue.splice(i, 0, e.cancion);
+    usePlayer.setState({ queue });
+  }
+  await playIndexAt(i, objetivo, e.sonando);
+}
+
 let ultimoContado = { id: '', pos: 0, en: 0, len: 0 };
 usePlayer.subscribe((s, antes) => {
   const p = useParty.getState().party;
@@ -265,13 +336,19 @@ usePlayer.subscribe((s, antes) => {
       if (uidSonando && id !== p.sonando?.cancion && !uidPorContar) uidSonando = null;
       contarPronto();
     } else if (s.playing !== antes.playing) contarAhora();
-    else if (s.queue !== antes.queue && s.queue.length !== ultimoContado.len) contarPronto();
+    else if (s.queue !== antes.queue)
+      contarPronto(); // agregó, quitó u ordenó su cola
     else if (s.playing && s.position !== antes.position) {
       const esperada = ultimoContado.pos + (Date.now() - ultimoContado.en) / 1000;
       if (ultimoContado.id === id && Math.abs(s.position - esperada) > 3) contarPronto(); // adelantó o retrocedió
     }
     if (id !== ultimoContado.id || s.playing !== antes.playing || s.queue !== antes.queue)
-      ultimoContado = { id, pos: s.position, en: Date.now(), len: s.queue.length };
+      ultimoContado = {
+        id,
+        pos: s.position,
+        en: Date.now(),
+        len: s.queue.length,
+      };
     return;
   }
   // Invitado en su aparato: si algo lo pausó por fuera (una llamada), se vuelve a poner al día.
@@ -381,7 +458,10 @@ export async function agregar(tracks: Track[]) {
   const ids = tracks.filter((t) => esDelServidor(t.id)).map((t) => t.id);
   if (!ids.length) return showSnack('Solo se pueden agregar canciones del servidor');
   try {
-    await api('/api/party/agregar', { method: 'POST', body: { canciones: ids } });
+    await api('/api/party/agregar', {
+      method: 'POST',
+      body: { canciones: ids },
+    });
     showSnack(ids.length === 1 ? `"${tracks[0].title}" se agregó a la Party` : `${ids.length} canciones se agregaron a la Party`);
   } catch (e) {
     showSnack((e as Error).message);
@@ -390,19 +470,63 @@ export async function agregar(tracks: Track[]) {
 
 export async function quitarAgregada(uid: string) {
   const p = useParty.getState().party;
-  if (p) useParty.setState({ party: { ...p, agregadas: p.agregadas.filter((a) => a.uid !== uid) } });
-  await api(`/api/party/agregadas/${encodeURIComponent(uid)}`, { method: 'DELETE' }).catch((e) => showSnack((e as Error).message));
+  if (p)
+    useParty.setState({
+      party: { ...p, agregadas: p.agregadas.filter((a) => a.uid !== uid) },
+    });
+  await api(`/api/party/agregadas/${encodeURIComponent(uid)}`, {
+    method: 'DELETE',
+  }).catch((e) => showSnack((e as Error).message));
 }
 
-export async function subirAgregada(uid: string) {
+/** ¿Puedo ordenar y quitar lo de la fila? El anfitrión, o todos si el anfitrión deja controlar la música. */
+export const puedoOrdenar = (p = useParty.getState().party) => !!p && (soyAnfitrion(p) || p.ajustes.controlar);
+
+/** Mueve una agregada al puesto `a` de "A continuación". */
+export async function moverAgregada(uid: string, a: number) {
   const p = useParty.getState().party;
-  const i = p?.agregadas.findIndex((a) => a.uid === uid) ?? -1;
-  if (!p || i <= 0) return;
+  const i = p?.agregadas.findIndex((x) => x.uid === uid) ?? -1;
+  if (!p || i < 0 || i === a) return;
   const agregadas = [...p.agregadas];
   const [x] = agregadas.splice(i, 1);
-  agregadas.splice(i - 1, 0, x);
+  agregadas.splice(Math.max(0, Math.min(agregadas.length, a)), 0, x);
   useParty.setState({ party: { ...p, agregadas } });
-  await api('/api/party/mover', { method: 'POST', body: { uid, a: i - 1 } }).catch(() => {});
+  await api('/api/party/mover', { method: 'POST', body: { uid, a } }).catch((e) => showSnack((e as Error).message));
+}
+
+/** En el aparato del anfitrión: quita o mueve una de las que siguen en su cola ("Siguiente de: …"). */
+function cambiarColaAqui(accion: 'quitar' | 'mover', cancion: string, antesDe?: string | null) {
+  const pl = usePlayer.getState();
+  const de = pl.queue.indexOf(cancion, pl.index + 1);
+  if (de < 0) return;
+  if (accion === 'quitar') pl.removeAt(de);
+  else {
+    // `antesDe`: la canción que queda justo después (null: al final de lo que se ve).
+    let a = antesDe ? pl.queue.indexOf(antesDe, pl.index + 1) : -1;
+    if (a < 0) {
+      const prox = pl.queue.slice(pl.index + 1, pl.index + 21).filter(esDelServidor);
+      const ult = prox.length ? pl.queue.indexOf(prox[prox.length - 1], pl.index + 1) : -1;
+      if (ult < 0) return;
+      a = ult + 1;
+    }
+    pl.mover(de, a > de ? a - 1 : a);
+  }
+  contarPronto();
+}
+
+/** Quitar o mover una de "Siguiente de: …" (la cola del anfitrión). */
+export async function cambiarProxima(accion: 'quitar' | 'mover', cancion: string, a = 0) {
+  const p = useParty.getState().party;
+  if (!p) return;
+  const proximas = p.proximas.filter((x) => x !== cancion);
+  if (accion === 'mover') proximas.splice(Math.max(0, Math.min(proximas.length, a)), 0, cancion);
+  const antesDe = accion === 'mover' ? (proximas[proximas.indexOf(cancion) + 1] ?? null) : null;
+  useParty.setState({ party: { ...p, proximas } });
+  if (soyAnfitrion(p)) return cambiarColaAqui(accion, cancion, antesDe);
+  await api('/api/party/cola', {
+    method: 'POST',
+    body: { accion, cancion, antesDe, a },
+  }).catch((e) => showSnack((e as Error).message));
 }
 
 export async function expulsar(usuario: number) {
@@ -411,7 +535,10 @@ export async function expulsar(usuario: number) {
 
 export async function cambiarControlar(controlar: boolean) {
   const p = useParty.getState().party;
-  if (p) useParty.setState({ party: { ...p, ajustes: { ...p.ajustes, controlar } } });
+  if (p)
+    useParty.setState({
+      party: { ...p, ajustes: { ...p.ajustes, controlar } },
+    });
   await api('/api/party/ajustes', { method: 'PUT', body: { controlar } }).catch((e) => showSnack((e as Error).message));
 }
 
@@ -468,9 +595,14 @@ async function volverAEntrar() {
     if (g.anfitrion) {
       const agregadas = useParty.getState().party?.agregadas ?? [];
       try {
-        const r = await api<{ party: PartyEstado }>('/api/party', { method: 'POST', body: { codigo: g.codigo, agregadas } });
+        const r = await api<{ party: PartyEstado }>('/api/party', {
+          method: 'POST',
+          body: { codigo: g.codigo, agregadas },
+        });
+        const retomar = retomarComoAnfitrion(r.party); // antes de contar: así no se avisa una pausa
         poner(r.party);
         contarAhora();
+        await retomar;
       } catch (e) {
         const st = (e as { status?: number }).status;
         if (st && st >= 400 && st < 500) {
@@ -526,6 +658,10 @@ eventosHooks.evento.push((ev) => {
   }
   if (ev.tipo === 'party-llego') {
     showSnack(`${String(ev.nombre)} se unió a la Party`);
+    return true;
+  }
+  if (ev.tipo === 'party-cola') {
+    if (soyAnfitrion()) cambiarColaAqui(ev.accion === 'quitar' ? 'quitar' : 'mover', String(ev.cancion), ev.antesDe ? String(ev.antesDe) : null);
     return true;
   }
   if (ev.tipo === 'party-control') {

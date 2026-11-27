@@ -25,6 +25,10 @@ const ventana = (): Ventana | null => {
 
 export const esAppPc = import.meta.env.VITE_PLATAFORMA === 'pc';
 
+// App de PC: esquinas redondeadas como las ventanas de macOS. La ventana es transparente y la interfaz se recorta con
+// bordes redondos (escritorio.css, html[data-app-pc]); maximizada va recta (data-maximizada).
+if (esAppPc && ventana()) document.documentElement.dataset.appPc = '';
+
 /**
  * Arrastrar la ventana desde la barra de arriba (en sus partes vacías) y doble clic para maximizar.
  * No cuenta si se tocó un botón, el buscador o un enlace.
@@ -45,7 +49,15 @@ export function BotonesVentana() {
     const v = ventana();
     if (!v) return;
     let quitar: (() => void) | undefined;
-    const revisar = () => void v.isMaximized().then(setMax).catch(() => {});
+    const revisar = () =>
+      void v
+        .isMaximized()
+        .then((m) => {
+          setMax(m);
+          if (m) document.documentElement.dataset.maximizada = '';
+          else delete document.documentElement.dataset.maximizada;
+        })
+        .catch(() => {});
     revisar();
     void v
       .onResized(revisar)

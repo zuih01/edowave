@@ -19,6 +19,28 @@ import './escritorio/temas'; // tema elegido en Configuración → Tema (despué
   }
 }
 
+// iPhone con la app instalada (PWA): iOS deja la página más baja que la pantalla y abajo queda una franja donde la
+// página no puede dibujar (se probó estirarla: se corta). Cuando pasa, se marca <html data-visor-corto>: la barra de
+// pestañas ya no reserva el espacio de la raya de inicio (iOS lo dejó fuera) y la franja se pinta del color de la
+// barra, así se ve como una sola barra hasta el borde (styles.css y temas.css).
+{
+  const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const instalada = matchMedia('(display-mode: standalone)').matches || (navigator as Navigator & { standalone?: boolean }).standalone === true;
+  if (ios && instalada) {
+    const ajustar = () => {
+      const vertical = innerHeight >= innerWidth;
+      const alto = vertical ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
+      const falta = alto - innerHeight;
+      // Solo si falta un trozo chico (con el teclado abierto falta mucho más: no se toca).
+      if (falta > 0 && falta <= 80) document.documentElement.dataset.visorCorto = '';
+      else delete document.documentElement.dataset.visorCorto;
+    };
+    ajustar();
+    addEventListener('resize', ajustar);
+    addEventListener('orientationchange', () => setTimeout(ajustar, 300));
+  }
+}
+
 // iPhone: sin zoom con dos dedos (la interfaz está hecha a la medida de la pantalla).
 document.addEventListener('gesturestart', (e) => e.preventDefault());
 

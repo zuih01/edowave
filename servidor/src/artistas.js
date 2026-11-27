@@ -7,6 +7,7 @@
 //
 // Lo decidido queda guardado (artista_decisiones) y se aplica solo a las canciones que se suban después.
 import { db } from './db.js';
+import { olvidarIndice } from './repetidas.js';
 
 /** Sin mayúsculas ni tildes ni espacios de más: "Álvaro  Díaz" = "alvaro diaz". */
 export const clave = (s) =>
@@ -127,6 +128,7 @@ export async function separarColaboracion(k, principal, invitados) {
       [k, cambiar[0]?.artista ?? k, principal, invitados],
     );
     await c.query('COMMIT');
+    olvidarIndice(); // cambiaron artistas o títulos: el índice de repetidas se rearma
   } catch (e) {
     await c.query('ROLLBACK').catch(() => {});
     throw e;
@@ -160,6 +162,7 @@ export async function unificarNombre(k, principal) {
       [k, principal],
     );
     await c.query('COMMIT');
+    olvidarIndice(); // cambiaron artistas o títulos: el índice de repetidas se rearma
   } catch (e) {
     await c.query('ROLLBACK').catch(() => {});
     throw e;

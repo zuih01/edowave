@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react';
-import { HeadphonesIcon } from '../components/Icons';
 import { currentTrack, usePlayer } from '../player/player';
 import { useCuenta } from '../server/cuenta';
 
 /**
  * App de PC: muestra en Discord lo que suena ("Escuchando Edowave · canción", con artista, carátula y tiempo).
  * La conexión con Discord la hace la parte de Rust (escritorio-pc\app\src-tauri\src\discord.rs); aquí solo se le
- * avisa qué suena. En pausa o sin canción se quita. Se puede apagar en Configuración (encendido por defecto).
+ * avisa qué suena. En pausa o sin canción se quita. Se puede apagar en Configuración → Privacidad (encendido por defecto).
  */
 type Tauri = { core: { invoke: <T>(cmd: string, args?: Record<string, unknown>) => Promise<T> } };
 const tauri = () => (window as unknown as { __TAURI__?: Tauri }).__TAURI__;
@@ -98,7 +97,10 @@ export function DiscordPc() {
   return (
     <button className="settings-row" role="switch" aria-checked={on} onClick={cambiar}>
       <span className="settings-icon">
-        <HeadphonesIcon />
+        {/* globo de estado (lo que muestra Discord bajo tu nombre) */}
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M20 3H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h3v3.5L11.5 18H20a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm0 13h-9.2L9 17.4V16H4V5h16v11zM7 8h10v2H7zm0 3h7v2H7z" />
+        </svg>
       </span>
       <span className="track-text">
         <span className="settings-label">Mostrar en Discord lo que escucho</span>

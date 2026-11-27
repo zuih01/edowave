@@ -10,6 +10,7 @@
 
 mod bandeja;
 mod discord;
+mod notch;
 
 use tauri::Manager;
 
@@ -58,6 +59,26 @@ fn abrir_descarga(app: tauri::AppHandle) -> Result<(), String> {
     app.opener().open_url(format!("{SERVIDOR}/download-beta"), None::<&str>).map_err(|e| e.to_string())
 }
 
+/// Tema Aero (en pruebas): la ventana se vuelve de vidrio con el Acrylic de Windows, que deja ver con desenfoque lo que
+/// hay detrás (escritorio, otras ventanas). Con los otros temas se apaga.
+#[tauri::command]
+fn vidrio(app: tauri::AppHandle, activar: bool) -> Result<(), String> {
+    use tauri::window::{Color, Effect, EffectsBuilder};
+    let w = app.get_webview_window("main").ok_or("sin ventana")?;
+    if activar {
+        // Tinte oscuro suave para que el texto blanco se lea sobre cualquier fondo.
+        let efecto = EffectsBuilder::new().effect(Effect::Acrylic).color(Color(16, 34, 64, 140)).build();
+        w.set_effects(efecto).map_err(|e| e.to_string())?;
+        w.set_background_color(Some(Color(0, 0, 0, 0))).map_err(|e| e.to_string())?;
+    } else {
+        // Fondo transparente igual: las esquinas redondeadas de la ventana las dibuja la interfaz (escritorio.css),
+        // y fuera de ellas se ve el escritorio.
+        w.set_effects(None).map_err(|e| e.to_string())?;
+        w.set_background_color(Some(Color(0, 0, 0, 0))).map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
 fn main() {
     tauri::Builder::default()
         // Una sola ventana: si ya está abierta y la vuelves a abrir (acceso directo), se trae al frente.
@@ -73,6 +94,12 @@ fn main() {
             if let tauri::WindowEvent::Resized(_) = e {
                 bandeja::al_cambiar_tamano(w);
             }
+            // Al cerrar la ventana principal se cierra también el notch (si no, la app seguiría abierta por él).
+            if let tauri::WindowEvent::Destroyed = e {
+                if w.label() == "main" {
+                    notch::cerrar(w.app_handle());
+                }
+            }
         })
         // Abrir la página de descarga en el navegador (ver abrir_descarga).
         .plugin(tauri_plugin_opener::init())
@@ -81,15 +108,20 @@ fn main() {
         .plugin(
             tauri_plugin_window_state::Builder::default()
                 .with_state_flags(tauri_plugin_window_state::StateFlags::all() & !tauri_plugin_window_state::StateFlags::DECORATIONS)
+                // El notch siempre va arriba al centro: no se recuerda su lugar.
+                .with_denylist(&[notch::ETIQUETA])
                 .build(),
         )
         .setup(|app| {
             if let Some(w) = app.get_webview_window("main") {
                 let _ = w.set_decorations(false);
+                // Sin la sombra de Windows: con ella Windows 11 redondea la ventana a 8 px y pone un borde claro, que
+                // se veía como una muesca bajo las esquinas de 14 px que dibuja la interfaz (escritorio.css).
+                let _ = w.set_shadow(false);
             }
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![buscar_actualizacion, version_app, abrir_descarga, discord::discord_actividad, bandeja::bandeja])
+        .invoke_handler(tauri::generate_handler![buscar_actualizacion, version_app, abrir_descarga, vidrio, discord::discord_actividad, bandeja::bandeja, notch::notch, notch::notch_abierto])
         .run(tauri::generate_context!())
         .expect("no se pudo abrir Edowave");
 }

@@ -10,9 +10,11 @@ import { db } from '../db.js';
 import { requiereAdmin, requiereUsuario } from '../auth.js';
 import { aligerar, convertirAudio, guardarImagen, leerDatos, nombreFormato, planAudio, sacarPortada, TIPOS } from '../medios.js';
 import { avisarCola } from '../analisis/cola.js';
-import { claveRepetida, esCopia, mismaCancion } from '../repetidas.js';
+import { agregarAlIndice, buscarRepetida, indiceRepetidas, lecturasNombre, olvidarIndice, orientarNombre } from '../repetidas.js';
 import { avisarVibra } from '../analisis/vibra.js';
 import { avisarLastfm } from '../datos/lastfm.js';
+import { avisarLetras } from '../datos/letras.js';
+import { avisarYtmusic } from '../datos/ytmusic.js';
 import { avisarAnioOriginal } from '../datos/anioOriginal.js';
 import { esImagen } from './fotoPerfil.js';
 import { CATEGORIAS, avisarCategorias } from '../categorias.js';
@@ -105,19 +107,46 @@ export async function procesarAudio({ tmp, nombre, huella, subidaPor = null, log
   // La misma canción ya subida (aunque sea de otro álbum, dure distinto, o sea una copia "Thriller1"; el artista
   // escrito "A, B" o "A y B" da igual): se rechaza y no se guarda nada. Las versiones distintas (remix, en vivo,
   // "con X", "feat."…) y las colaboraciones con otra persona sí entran. Ver repetidas.js.
-  const clave = claveRepetida(datos.artista, datos.titulo);
-  if (clave) {
-    const iguales = await db.query('SELECT id, titulo, artista, album, duracion, pista FROM canciones');
-    const nueva = { titulo: datos.titulo, album: datos.album, duracion: datos.duracion, pista: datos.pista };
-    const misma = iguales.rows.find((c) => {
-      const k = claveRepetida(c.artista, c.titulo);
-      if (!k) return false;
-      if (k === clave) return mismaCancion(nueva, c);
-      return esCopia(clave, k, datos.duracion, c.duracion) || esCopia(k, clave, c.duracion, datos.duracion);
-    });
-    if (misma) return { codigo: 409, error: `Ya está subida: ${misma.artista} – ${misma.titulo}`, id: misma.id };
+  // El catálogo se lee una vez y queda en memoria (indiceRepetidas): antes se leían las ~23 000 canciones en cada
+  // subida. Los invitados del título cuentan como artistas ("Dracula (with JENNIE)" = "Dracula (con JENNIE)").
+  const indice = await indiceRepetidas(async () => (await db.query('SELECT id, titulo, artista, album, duracion, pista FROM canciones')).rows);
+  // Sin etiquetas, el nombre puede venir al revés ("Canción - Artista.mp3"): se da vuelta si el catálogo lo indica.
+  if (datos.desdeNombre && datos.partesNombre.length > 1) {
+    const o = orientarNombre(indice, datos.partesNombre, datos.duracion, subidaPor);
+    if (o.invertido) {
+      log.info({ archivo: nombre, artista: o.artista, titulo: o.titulo }, 'subida: nombre "Título - Artista" dado vuelta');
+      datos.artista = o.artista;
+      datos.titulo = o.titulo;
+      await aplicarDecisiones(datos).catch(() => {});
+    }
   }
+  // Se revisa con lo que dicen las etiquetas Y con lo que dice el nombre del archivo, leído en los dos sentidos
+  // ("Artista - Título.mp3" y "Título - Artista.mp3"): si cualquiera ya está, no entra.
+  const lecturas = [{ artista: datos.artista, titulo: datos.titulo }];
+  if (datos.partesNombre.length > 1) {
+    const { derecho, alReves } = lecturasNombre(datos.partesNombre);
+    lecturas.push(derecho, alReves);
+  }
+  let misma = null;
+  for (const l of lecturas) {
+    misma = buscarRepetida(indice, { ...l, album: datos.album, duracion: datos.duracion, pista: datos.pista });
+    if (misma) break;
+  }
+  if (misma) return { codigo: 409, error: `Ya está subida: ${misma.artista} – ${misma.titulo}`, id: misma.id };
   const id = nuevoId();
+  // Se anota al tiro (antes de convertir): dos subidas iguales al mismo tiempo ya no entran las dos.
+  agregarAlIndice({ id, titulo: datos.titulo, artista: datos.artista, album: datos.album, duracion: datos.duracion, pista: datos.pista });
+  try {
+    const r = await guardarNueva({ id, tmp, nombre, huella, subidaPor, log, datos });
+    if (r.codigo) olvidarIndice();
+    return r;
+  } catch (e) {
+    olvidarIndice(); // no quedó: que el índice se rearme sin ella
+    throw e;
+  }
+}
+
+async function guardarNueva({ id, tmp, nombre, huella, subidaPor, log, datos }) {
   const plan = planAudio(datos);
   const archivo = `${id}.${plan.formato}`;
   const portada = datos.tienePortada ? await sacarPortada(tmp, portadas()) : null;
@@ -151,6 +180,8 @@ export async function procesarAudio({ tmp, nombre, huella, subidaPor = null, log
   avisarCola();
   avisarVibra();
   avisarLastfm();
+  avisarLetras();
+  avisarYtmusic(); // su radio y "Relacionado" de YouTube Music
   avisarAnioOriginal();
   avisarMudanza();
   avisarCategorias();
@@ -230,6 +261,7 @@ export default async function rutasMusica(app) {
     const r = await db.query(`UPDATE canciones SET ${sets.join(', ')} WHERE id = $1`, vals);
     if (!r.rowCount) return reply.code(404).send({ error: 'No existe' });
     lista = null; // la lista guardada para la app ya no está al día
+    if (cambios.titulo || cambios.artista) olvidarIndice(); // el índice de repetidas se rearma con el nombre nuevo
     if (cambios.categorias?.length) avisarCategorias(); // sugiere el resto del álbum o del artista
     if (cambios.titulo || cambios.artista) avisarFaltantes(); // con el nombre corregido puede calzar con una que faltaba
     const q = await db.query(`SELECT ${CAMPOS} FROM canciones c LEFT JOIN analisis a ON a.cancion_id = c.id WHERE c.id = $1`, [req.params.id]);
@@ -282,6 +314,7 @@ export default async function rutasMusica(app) {
   app.delete('/api/admin/canciones/:id', { preHandler: requiereAdmin }, async (req, reply) => {
     const r = await db.query('DELETE FROM canciones WHERE id = $1 RETURNING archivo, portada, original, almacen', [req.params.id]);
     if (!r.rowCount) return reply.code(404).send({ error: 'No existe' });
+    olvidarIndice();
     const clave = `s:${req.params.id}`;
     await db.query('DELETE FROM valoraciones WHERE cancion = $1', [clave]);
     await db.query('DELETE FROM playlist_canciones WHERE cancion = $1', [clave]);
@@ -316,6 +349,7 @@ export default async function rutasMusica(app) {
         if (w.original) await c.query('INSERT INTO wifi_borrar (archivo) VALUES ($1) ON CONFLICT DO NOTHING', [`originales/${w.original}`]);
       }
       n = (await c.query('DELETE FROM canciones')).rowCount; // su análisis se borra con ellas
+      olvidarIndice();
       await c.query("DELETE FROM valoraciones WHERE cancion LIKE 's:%'");
       await c.query("DELETE FROM playlist_canciones WHERE cancion LIKE 's:%'");
       await c.query('COMMIT');

@@ -112,8 +112,18 @@ function loadSaved(): Pick<EqState, 'enabled' | 'gains' | 'preset' | 'saved' | '
  * regula igual el reproductor normal y el tocadiscos. Se hace con el circuito de audio y no con audio.volume
  * porque en el iPhone ese no se puede cambiar.
  */
+/**
+ * iPhone / iPad (solo llega por la web): el volumen lo manejan los botones del teléfono. La app no muestra su barra
+ * de volumen, lo deja siempre al 100% y no lo sincroniza con la cuenta (antes, bajar el volumen en el PC lo bajaba
+ * también aquí, sin forma de subirlo).
+ */
+export const volumenDelSistema =
+  typeof navigator !== 'undefined' &&
+  (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
+
 export const useVolumen = create<{ v: number; set: (v: number) => void }>((set) => ({
   v: (() => {
+    if (volumenDelSistema) return 1;
     try {
       const x = Number(localStorage.getItem('volumen'));
       return localStorage.getItem('volumen') !== null && x >= 0 && x <= 1 ? x : 1;

@@ -31,7 +31,7 @@ export function enviar(usuarioId, evento) {
   const txt = `data: ${JSON.stringify(evento)}\n\n`;
   for (const res of set) res.write(txt);
 }
-const enviarATodos = (evento) => {
+export const enviarATodos = (evento) => {
   for (const id of conexiones.keys()) enviar(id, evento);
 };
 conAvisos(enviar); // las playlists importadas avisan cuando se les agrega una canción que faltaba
@@ -335,15 +335,23 @@ export default async function social(app) {
     return { ok: true };
   });
 
-  /** ¿Comparto lo que escucho? (para el ajuste de Configuración) y quién escucha conmigo ahora. */
+  /** ¿Comparto lo que escucho? ¿Muestro mis amigos en mi perfil? (Configuración) y quién escucha conmigo ahora. */
   app.get('/api/privacidad', { preHandler: requiereUsuario }, async (req) => {
     const yo = N(req.usuario.id);
-    return { compartir: await comparteDe(yo), oyentes: listaOyentes(yo) };
+    const m = await db.query('SELECT mostrar_amigos FROM usuarios WHERE id = $1', [yo]);
+    return { compartir: await comparteDe(yo), mostrarAmigos: m.rows[0]?.mostrar_amigos !== false, oyentes: listaOyentes(yo) };
   });
 
+  /** Cada ajuste es opcional: solo se cambia lo que viene (las apps viejas mandan solo `compartir`). */
   app.put('/api/privacidad', { preHandler: requiereUsuario }, async (req) => {
     const yo = N(req.usuario.id);
-    const compartir = req.body?.compartir !== false;
+    const out = {};
+    if (req.body?.mostrarAmigos !== undefined) {
+      out.mostrarAmigos = req.body.mostrarAmigos !== false;
+      await db.query('UPDATE usuarios SET mostrar_amigos = $2 WHERE id = $1', [yo, out.mostrarAmigos]);
+    }
+    if (req.body?.compartir === undefined) return out;
+    const compartir = req.body.compartir !== false;
     await db.query('UPDATE usuarios SET compartir_escucha = $2 WHERE id = $1', [yo, compartir]);
     comparte.set(yo, compartir);
     if (!compartir) {
@@ -352,7 +360,7 @@ export default async function social(app) {
     }
     // Sus amigos actualizan la lista (ven "no comparte" o vuelven a ver lo que escucha).
     for (const amigo of await amigosDe(yo)) enviar(amigo, { tipo: 'amigos' });
-    return { compartir };
+    return { ...out, compartir };
   });
 
   // ---------------- Amigos ----------------
@@ -450,7 +458,7 @@ export default async function social(app) {
     const yo = N(req.usuario.id);
     const id = req.params.id === 'yo' ? yo : N(req.params.id);
     if (!Number.isSafeInteger(id) || id <= 0) return reply.code(404).send({ error: 'No existe ese usuario' });
-    const u = await db.query('SELECT id, nombre, foto, banner, descripcion, perfil_estilo, es_admin, creado FROM usuarios WHERE id = $1', [id]);
+    const u = await db.query('SELECT id, nombre, foto, banner, descripcion, perfil_estilo, es_admin, creado, mostrar_amigos FROM usuarios WHERE id = $1', [id]);
     if (!u.rowCount || (u.rows[0].es_admin && id !== yo)) return reply.code(404).send({ error: 'No existe ese usuario' });
     const [amigos, pls, rel, insignias] = await Promise.all([
       db.query(
@@ -475,6 +483,8 @@ export default async function social(app) {
     const a = rel?.rows[0];
     const relacion = id === yo ? 'yo' : !a ? null : a.estado === 'aceptada' ? 'amigos' : N(a.de) === yo ? 'enviada' : 'recibida';
     const x = u.rows[0];
+    // Privacidad: quien ocultó sus amigos los sigue viendo en su propio perfil; los demás, no (ni cuántos son).
+    const amigosOcultos = x.mostrar_amigos === false && id !== yo;
     return {
       id,
       nombre: x.nombre,
@@ -482,10 +492,12 @@ export default async function social(app) {
       banner: x.banner ?? null,
       descripcion: x.descripcion ?? '',
       estilo: estiloDe(x.perfil_estilo),
-      insignias: insignias.get(id) ?? [],
+      // La insignia de amigos dice cuántos tiene: con los amigos ocultos, tampoco se muestra.
+      insignias: (insignias.get(id) ?? []).filter((i) => !(amigosOcultos && i.id === 'amigos')),
       desde: x.creado ? new Date(x.creado).getTime() : null,
       playlists: pls.rows[0].n,
-      amigos: amigos.rows.map((f) => ({ id: N(f.id), nombre: f.nombre, foto: f.foto ?? null })),
+      amigos: amigosOcultos ? [] : amigos.rows.map((f) => ({ id: N(f.id), nombre: f.nombre, foto: f.foto ?? null })),
+      amigosOcultos,
       relacion,
       amistad: a ? N(a.id) : null,
     };
@@ -559,7 +571,10 @@ export default async function social(app) {
       leida = await leerPlaylistSpotify(spotify);
     } catch (e) {
       req.log.warn({ err: e.message }, 'importar: no se pudo leer la playlist de Spotify');
-      return reply.code(e.codigo === 404 ? 404 : 502).send({ error: e.codigo === 404 ? e.message : 'Spotify no respondió. Prueba de nuevo en un rato.' });
+      // Nunca 502/503/504: la app los toma como "servidor caído" y muestra "No hay conexión con el servidor".
+      if (e.codigo === 404) return reply.code(404).send({ error: e.message });
+      if (e.codigo === 429) return reply.code(429).send({ error: 'Spotify está recibiendo muchas importaciones. Prueba de nuevo en un minuto.' });
+      return reply.code(424).send({ error: 'Spotify no respondió. Prueba de nuevo en un rato.' });
     }
     if (!leida.canciones.length) return reply.code(400).send({ error: 'Esa playlist está vacía' });
     const id = `p${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;

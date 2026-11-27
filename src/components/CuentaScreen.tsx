@@ -280,7 +280,7 @@ export function CuentaScreen() {
       <div className={`cuenta-screen ${closing ? 'closing' : ''}`}>
         <div className="cuenta-box cuenta-inicio">
           <div className="cuenta-logo" aria-hidden="true" />
-          <h1>Tu música, en todos tus aparatos</h1>
+          <h1>Tu música, en todos tus dispositivos</h1>
           <button className="cuenta-btn" onClick={() => ir('entrar')}>
             Iniciar sesión
           </button>

@@ -8,6 +8,8 @@
 export {
   billboardIds,
   buildModel,
+  confianzaEnYoutube,
+  motivoRadio,
   descubrimientoSemanal,
   groupScore,
   heardIds,

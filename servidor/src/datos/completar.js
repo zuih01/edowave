@@ -1,4 +1,5 @@
 import { bajarImagen, buscarEnTiendas } from './tiendas.js';
+import { buscarAlbumYtm } from './ytmusic.js';
 import { bajarPortada, buscarAlbumes, buscarGrabaciones, leerAlbum, leerGrabacion } from './musicbrainz.js';
 
 /**
@@ -272,4 +273,48 @@ export async function completarConTiendas(c, res, guardarPortada) {
   }
   if (!completado.length) return res;
   return { cambios, completado, grabacion: res?.grabacion ?? null, creditos: res?.creditos ?? null, fuente: t.fuente };
+}
+
+/**
+ * Último paso para que ninguna canción quede sin álbum ni carátula:
+ *   1) YouTube Music (tiene casi todo: OST de anime y juegos, phonk, artistas chicos), si todavía falta algo.
+ *   2) Si nadie sabe el álbum, es un sencillo: el álbum se llama como la canción (sin "feat.", "Remastered"…).
+ * La carátula, si nadie la tiene, queda la de por defecto. Nunca pisa lo que ya había.
+ */
+export async function completarAlbumYPortada(c, res, guardarPortada) {
+  const cambios = { ...(res?.cambios ?? {}) };
+  const completado = [...(res?.completado ?? [])];
+  const tieneAlbum = !!(c.album || cambios.album);
+  const tienePortada = !!(c.portada || cambios.portada);
+  if (tieneAlbum && tienePortada) return res;
+  const poner = (campo, valor) => {
+    if (valor === null || valor === undefined || valor === '' || cambios[campo] !== undefined) return;
+    cambios[campo] = valor;
+    completado.push(campo);
+  };
+  let y = null;
+  let ytmFallo = false;
+  if (c.artista && !/^artista desconocido$/i.test(c.artista)) {
+    try {
+      y = await buscarAlbumYtm(c.artista, c.titulo, c.duracion);
+    } catch {
+      ytmFallo = true; // YouTube Music no respondió: se reintenta otro día (no se inventa el sencillo todavía)
+    }
+  }
+  if (y) {
+    if (!tieneAlbum) {
+      poner('album', y.album);
+      if (!c.artista_album) poner('artista_album', y.artistaAlbum);
+    }
+    if (!tienePortada && y.portada) {
+      const img = await bajarImagen(y.portada);
+      if (img) poner('portada', await guardarPortada(img));
+    }
+  }
+  if (!c.album && !cambios.album && !ytmFallo) {
+    poner('album', tituloParaBuscar(c.titulo));
+    if (!c.artista_album) poner('artista_album', c.artista);
+  }
+  if (completado.length === (res?.completado ?? []).length) return res;
+  return { cambios, completado, grabacion: res?.grabacion ?? null, creditos: res?.creditos ?? null, fuente: y ? 'ytmusic' : res?.fuente ?? 'sencillo' };
 }

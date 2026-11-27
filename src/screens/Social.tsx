@@ -511,6 +511,8 @@ interface Perfil {
   insignias?: Insignia[];
   playlists: number;
   amigos: { id: number; nombre: string; foto: string | null }[];
+  /** Esa persona ocultó sus amigos (Configuración → Privacidad): no llega la lista ni cuántos son. */
+  amigosOcultos?: boolean;
   relacion: 'yo' | 'amigos' | 'enviada' | 'recibida' | null;
   amistad: number | null;
 }
@@ -530,7 +532,7 @@ async function leerBanner(f: File): Promise<string> {
       r.readAsDataURL(f);
     });
   if (f.type === 'image/gif') {
-    if (f.size > 8 * 1024 * 1024) throw new Error('El GIF tiene que pesar menos de 8 MB');
+    if (f.size > 15 * 1024 * 1024) throw new Error('El GIF tiene que pesar menos de 15 MB');
     return leer();
   }
   if (!f.type.startsWith('image/')) throw new Error('Ese archivo no es una imagen');
@@ -741,7 +743,8 @@ export function UsuarioPage({ id }: { id: number }) {
           <h1>{p.nombre}</h1>
           <FilaInsignias lista={p.insignias ?? []} />
           <div className="perfil-cifras">
-            {nPlaylists} {nPlaylists === 1 ? 'playlist pública' : 'playlists públicas'} • {p.amigos.length} {p.amigos.length === 1 ? 'amigo' : 'amigos'}
+            {nPlaylists} {nPlaylists === 1 ? 'playlist pública' : 'playlists públicas'}
+            {!p.amigosOcultos && <> • {p.amigos.length} {p.amigos.length === 1 ? 'amigo' : 'amigos'}</>}
           </div>
         </div>
       </div>
@@ -804,6 +807,19 @@ export function UsuarioPage({ id }: { id: number }) {
               {texto.length}/{MAX_DESCRIPCION}
             </span>
 
+            <span className="perfil-editar-titulo">Foto de perfil</span>
+            <div className="perfil-banner-op perfil-foto-op">
+              <button className="perfil-foto-muestra" onClick={abrirFotoPerfil} aria-label="Cambiar foto de perfil">
+                <AvatarDe nombre={p.nombre} foto={p.foto} size={64} />
+              </button>
+              <div className="perfil-banner-botones">
+                <button className="pill" onClick={abrirFotoPerfil}>
+                  {p.foto ? 'Cambiar foto' : 'Subir foto'}
+                </button>
+                <span className="muted small">Foto o GIF. También puedes tocar tu foto de arriba.</span>
+              </div>
+            </div>
+
             <span className="perfil-editar-titulo">Banner</span>
             <div className="perfil-banner-op">
               <span className="perfil-banner-muestra" style={{ '--perfil': borrador.color ?? colorFoto } as React.CSSProperties}>
@@ -818,7 +834,7 @@ export function UsuarioPage({ id }: { id: number }) {
                     Quitar
                   </button>
                 )}
-                <span className="muted small">Foto o GIF. Se recorta al centro (3:1). Hasta 5 MB, o 8 MB si es GIF.</span>
+                <span className="muted small">Foto o GIF. Se recorta al centro (3:1). Hasta 5 MB, o 15 MB si es GIF.</span>
               </div>
             </div>
 
@@ -960,6 +976,7 @@ export function UsuarioPage({ id }: { id: number }) {
           )}
         </section>
 
+        {!p.amigosOcultos && (
         <section>
           <h3 className="sub-head">Amigos</h3>
           {p.amigos.length === 0 ? (
@@ -976,6 +993,7 @@ export function UsuarioPage({ id }: { id: number }) {
             </Carrusel>
           )}
         </section>
+        )}
       </div>
     </div>
   );

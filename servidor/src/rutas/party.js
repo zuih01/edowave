@@ -240,22 +240,23 @@ export default async function party(app) {
     return { ok: true };
   });
 
-  /** Quitar una agregada: el anfitrión cualquiera; los invitados, solo las suyas. */
+  /** Quitar una agregada: el anfitrión (o todos, si deja controlar la música) cualquiera; los demás, solo las suyas. */
   app.delete('/api/party/agregadas/:uid', { preHandler: requiereUsuario }, async (req, reply) => {
     const { yo, p } = miParty(req);
     if (!p) return reply.code(404).send({ error: 'No estás en una Party' });
     const i = p.agregadas.findIndex((a) => a.uid === req.params.uid);
     if (i < 0) return { ok: true };
-    if (p.anfitrion.id !== yo && p.agregadas[i].por !== yo) return reply.code(403).send({ error: 'Solo puedes quitar las que agregaste tú' });
+    if (p.anfitrion.id !== yo && !p.ajustes.controlar && p.agregadas[i].por !== yo) return reply.code(403).send({ error: 'Solo puedes quitar las que agregaste tú' });
     p.agregadas.splice(i, 1);
     avisar(p);
     return { ok: true };
   });
 
-  /** Mover una agregada a otro puesto (solo el anfitrión). */
+  /** Mover una agregada a otro puesto (el anfitrión, o todos si deja controlar la música). */
   app.post('/api/party/mover', { preHandler: requiereUsuario }, async (req, reply) => {
     const { yo, p } = miParty(req);
-    if (!p || p.anfitrion.id !== yo) return reply.code(403).send({ error: 'Solo el anfitrión ordena la fila' });
+    if (!p) return reply.code(404).send({ error: 'No estás en una Party' });
+    if (p.anfitrion.id !== yo && !p.ajustes.controlar) return reply.code(403).send({ error: 'El anfitrión no permite ordenar la fila' });
     const i = p.agregadas.findIndex((a) => a.uid === req.body?.uid);
     const a = Math.max(0, Math.min(p.agregadas.length - 1, Number(req.body?.a) || 0));
     if (i >= 0 && i !== a) {
@@ -263,6 +264,31 @@ export default async function party(app) {
       p.agregadas.splice(a, 0, x);
       avisar(p);
     }
+    return { ok: true };
+  });
+
+  /**
+   * Quitar o mover una de "Siguiente de: …" (la cola del anfitrión). La cola vive en el dispositivo del anfitrión:
+   * se le pasa el pedido y, mientras, se muestra el cambio a todos.
+   */
+  app.post('/api/party/cola', { preHandler: requiereUsuario }, async (req, reply) => {
+    const { yo, p } = miParty(req);
+    if (!p) return reply.code(404).send({ error: 'No estás en una Party' });
+    if (p.anfitrion.id !== yo && !p.ajustes.controlar) return reply.code(403).send({ error: 'El anfitrión no permite cambiar la música' });
+    const b = req.body ?? {};
+    const accion = b.accion === 'quitar' ? 'quitar' : b.accion === 'mover' ? 'mover' : null;
+    const cancion = idCancion(b.cancion);
+    const antesDe = idCancion(b.antesDe);
+    if (!accion || !cancion) return reply.code(400).send({ error: 'Pedido incompleto' });
+    const i = p.proximas.indexOf(cancion);
+    if (i < 0) return { ok: true };
+    p.proximas.splice(i, 1);
+    if (accion === 'mover') {
+      const j = antesDe ? p.proximas.indexOf(antesDe) : -1;
+      p.proximas.splice(j < 0 ? p.proximas.length : j, 0, cancion);
+    }
+    enviar(p.anfitrion.id, { tipo: 'party-cola', accion, cancion, antesDe, nombre: req.usuario.nombre });
+    avisar(p);
     return { ok: true };
   });
 

@@ -1,7 +1,7 @@
 import { join } from 'node:path';
 import { db } from '../db.js';
 import { decodificarMono, guardarImagen, medirVolumen } from '../medios.js';
-import { artistasDe, completarCancion, completarConTiendas, normalizar } from '../datos/completar.js';
+import { artistasDe, completarAlbumYPortada, completarCancion, completarConTiendas, normalizar } from '../datos/completar.js';
 import { integrantesDe } from '../datos/musicbrainz.js';
 import { SinConexion } from '../datos/musicbrainz.js';
 import { analizarRasgos } from './rasgos.js';
@@ -24,6 +24,34 @@ export function iniciarCola(logger) {
   void procesar();
   void procesarDatos();
   void procesarArtistas();
+  // Las que siguen sin álbum o sin carátula se vuelven a buscar solas: al arrancar y cada 6 horas.
+  setTimeout(() => void reintentarSinAlbum(), 60_000).unref();
+  setInterval(() => void reintentarSinAlbum(), 6 * 3600_000).unref();
+}
+
+/**
+ * Vuelve a poner en cola (de a 500) las canciones sin álbum o sin carátula que no se revisan hace 7 días, o que se
+ * revisaron antes de que existiera la búsqueda en YouTube Music y el "sencillo" (26-11-2026).
+ */
+const FUENTES_DESDE = '2026-11-26T08:00:00Z';
+async function reintentarSinAlbum() {
+  try {
+    const r = await db.query(
+      `UPDATE canciones SET datos_estado = 'pendiente'
+        WHERE id IN (SELECT id FROM canciones
+                      WHERE (album IS NULL OR album = '' OR portada IS NULL)
+                        AND datos_estado IN ('sin_resultado', 'listo', 'error')
+                        AND (datos_revisado IS NULL OR datos_revisado < now() - interval '7 days' OR datos_revisado < $1)
+                      ORDER BY subida DESC LIMIT 500)`,
+      [FUENTES_DESDE],
+    );
+    if (r.rowCount) {
+      log.info({ canciones: r.rowCount }, 'datos: se vuelven a buscar álbum y carátula de las que no tenían');
+      void procesarDatos();
+    }
+  } catch (e) {
+    log.warn({ err: e.message }, 'datos: no se pudieron reintentar las canciones sin álbum');
+  }
 }
 
 /** Avisa que hay canciones nuevas por analizar y por completar. */
@@ -91,8 +119,9 @@ async function procesarDatos() {
       if (!c) return;
       try {
         const guardar = (img) => guardarImagen(img, join(process.env.MUSIC_DIR, '..', 'portadas'));
-        // MusicBrainz primero; lo que no sepa (álbum, portada) se busca en iTunes / Deezer.
-        const res = await completarConTiendas(c, await completarCancion(c, guardar), guardar);
+        // MusicBrainz primero; lo que no sepa (álbum, portada) se busca en iTunes / Deezer y después en YouTube Music.
+        // Si nadie sabe el álbum, es un sencillo: se llama como la canción.
+        const res = await completarAlbumYPortada(c, await completarConTiendas(c, await completarCancion(c, guardar), guardar), guardar);
         if (!res) {
           await db.query(`UPDATE canciones SET datos_estado = 'sin_resultado', datos_revisado = now() WHERE id = $1`, [c.id]);
           log.info({ cancion: c.titulo }, 'MusicBrainz no tiene esta canción');

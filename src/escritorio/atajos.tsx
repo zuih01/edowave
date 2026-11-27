@@ -8,6 +8,7 @@ import { useVolumen } from '../player/equalizer';
 import { currentTrack, usePlayer } from '../player/player';
 import { useSocial } from '../server/social';
 import { useParty } from '../server/party';
+import { useLetraUi } from '../player/letras';
 import type { Track } from '../types';
 
 /**
@@ -56,6 +57,7 @@ export const ATAJOS: { grupo: string; filas: [string[][], string][] }[] = [
       [[['Alt', 'Shift', 'S']], 'Música que te gustó'],
       [[['Alt', 'Shift', '0']], 'Tu biblioteca'],
       [[['Alt', 'Shift', 'Q']], 'Mostrar u ocultar la fila'],
+      [[['Alt', 'Shift', 'L']], 'Mostrar u ocultar la letra'],
       [[['Alt', 'Shift', 'R']], 'Mostrar u ocultar lo que suena'],
       [[['Alt', 'Shift', 'P']], 'Nueva playlist'],
       [[['Ctrl', ',']], 'Configuración'],
@@ -179,6 +181,10 @@ export function useAtajos(buscar: () => void, alternarPanel: (p: Exclude<Panel, 
           case 'KeyR':
             e.preventDefault();
             return alternarPanel('ahora');
+          case 'KeyL':
+            e.preventDefault();
+            usePlayer.getState().setExpanded(false);
+            return useLetraUi.getState().alternar();
           case 'KeyP':
             return ir(() => openCreatePlaylist());
           case 'KeyB': {

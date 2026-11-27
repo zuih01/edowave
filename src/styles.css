@@ -17,6 +17,11 @@ html, body, #root { height: 100%; margin: 0; }
 /* App fija como una app nativa: en el iPhone la página no rebota ni se desplaza entera; solo se desplaza
    el contenido de adentro. Sin zoom con doble toque. Los textos de la interfaz no se seleccionan al tocarlos. */
 html, body { position: fixed; inset: 0; overflow: hidden; overscroll-behavior: none; touch-action: manipulation; }
+/* Instalada en el iPhone (PWA) con <html data-visor-corto> (ver main.tsx): la franja de abajo queda fuera de la
+   página. Se pinta del color de la barra de pestañas y la barra no reserva el espacio de la raya de inicio. */
+html[data-visor-corto] { background: #0f0f0f; }
+html[data-visor-corto] .bottom-nav { height: var(--nav-h); padding-bottom: 0; }
+html[data-visor-corto] .full-player { padding-bottom: 16px; }
 #root { overflow: hidden; }
 .app { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .app input, .app textarea { -webkit-user-select: text; user-select: text; }
@@ -1390,6 +1395,8 @@ body.ordenando { user-select: none; -webkit-user-select: none; }
 .perfil-banner-muestra img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .perfil-banner-botones { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; flex: 1; min-width: 200px; }
 .perfil-banner-botones .muted { flex-basis: 100%; }
+.perfil-foto-muestra { flex: none; width: 64px; height: 64px; border-radius: 50%; overflow: hidden; display: grid; place-items: center; transition: transform 0.15s, filter 0.15s; }
+.perfil-foto-muestra:hover { transform: scale(1.05); filter: brightness(1.1); }
 .perfil-hero { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 4px 20px 18px; text-align: center; }
 .perfil-foto { padding: 0; border: 0; background: none; border-radius: 50%; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55); }
 .perfil-foto:not(:disabled) { cursor: pointer; }
@@ -1484,3 +1491,80 @@ body.ordenando { user-select: none; -webkit-user-select: none; }
 .sin-conexion-link:disabled { opacity: 0.5; }
 .sin-conexion-pie { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px; padding: 18px 16px 8px; font-size: 13px; color: var(--text-2); }
 .sin-conexion-pie .sin-conexion-link { font-size: 13px; min-height: 36px; padding: 0 10px; }
+
+/* ============ Letra de la canción (hoja del teléfono y lista compartida con PC) ============ */
+/* Fondo animado: la carátula borrosa girando (FondoLetra). El lienzo es diminuto; aquí se agranda y se difumina. */
+.fondo-letra { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.fondo-letra canvas { position: absolute; inset: -12%; width: 124%; height: 124%; filter: blur(34px) saturate(1.5) brightness(0.92); transform: translateZ(0); }
+.fondo-letra::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0, 0, 0, 0.32), rgba(0, 0, 0, 0.42)); }
+
+.letra-hoja { position: absolute; inset: 0; z-index: 40; display: flex; flex-direction: column; padding-top: env(safe-area-inset-top); overflow: hidden;
+  background: color-mix(in srgb, var(--hoja-color, #2a2a3a) 38%, #0b0b0b); animation: slide-up 0.3s var(--ease-out); }
+.letra-hoja > :not(.fondo-letra) { position: relative; z-index: 1; }
+.letra-hoja.cerrando { animation: slide-down 0.24s var(--ease-in) forwards; pointer-events: none; }
+.letra-mini { display: flex; align-items: center; gap: 14px; padding: 12px 20px 14px; color: #fff; }
+.letra-mini .letra-mini-portada { width: 56px; height: 56px; border-radius: 6px; flex: none; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35); }
+.letra-mini-texto { flex: 1; min-width: 0; }
+.letra-mini-titulo { font-size: 18px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.letra-mini-artista { font-size: 16px; color: rgba(255, 255, 255, 0.75); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.letra-panel { flex: 1; min-height: 0; display: flex; flex-direction: column; border-radius: 22px 22px 0 0; overflow: hidden; position: relative;
+  background: rgba(0, 0, 0, 0.18); box-shadow: 0 -1px 0 rgba(255, 255, 255, 0.08); transition: transform 0.25s var(--ease-out); }
+.letra-panel.arrastrando { transition: none; }
+.letra-agarre { width: 46px; height: 5px; border-radius: 3px; background: rgba(255, 255, 255, 0.4); margin: 12px auto 0; flex: none; }
+.letra-cab { display: flex; align-items: center; justify-content: space-between; padding: 10px 20px 12px; flex: none; touch-action: none; }
+.letra-cab h2 { font-size: 22px; font-weight: 800; color: #fff; margin: 0; }
+
+.letra-caja { position: relative; flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; padding: 0 22px;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 56px, #000 calc(100% - 96px), transparent 100%);
+  mask-image: linear-gradient(180deg, transparent 0, #000 56px, #000 calc(100% - 96px), transparent 100%); }
+.letra-caja::-webkit-scrollbar { display: none; }
+.letra-relleno { height: 28px; }
+.letra-relleno.final { height: 55%; }
+/* Líneas: medio brillo y un desenfoque que crece con la distancia a la que suena (se quita al mover la letra a mano) */
+.letra-linea { display: block; width: 100%; text-align: left; background: none; border: 0; padding: 10px 0; margin: 0; color: rgba(255, 255, 255, 0.5);
+  font: inherit; font-size: 26px; font-weight: 800; line-height: 1.22; letter-spacing: -0.01em; cursor: pointer; transform-origin: left center;
+  transition: color 0.25s ease, opacity 0.25s ease, filter 0.4s ease, transform 0.55s cubic-bezier(0.34, 1.45, 0.64, 1); -webkit-tap-highlight-color: transparent; }
+/* Todas las líneas llevan SIEMPRE los mismos dos filtros (desenfoque + brillo de radio fijo) y solo cambian sus
+   valores: así el cambio de línea se anima suave. Antes la actual usaba solo un brillo de radio variable y las demás
+   solo desenfoque; Safari del iPhone no puede mezclar filtros distintos y dejaba una franja magenta (un trozo sin
+   dibujar) arriba de la línea que acababa de sonar. */
+.letra-caja.sincronizada .letra-linea { --brillo: 0; --desenfoque: 0px; filter: blur(var(--desenfoque)) drop-shadow(0 0 10px rgba(255, 255, 255, var(--brillo))); will-change: filter, transform; }
+.letra-caja.sincronizada:not(.libre) .letra-linea { --desenfoque: calc(var(--d, 0) * 0.8px); }
+.letra-caja.sincronizada .letra-linea:hover { --desenfoque: 0px; }
+.letra-linea:disabled { cursor: default; }
+.letra-linea.pasada { color: rgba(255, 255, 255, 0.5); }
+/* Línea actual: crece y se llena de blanco de izquierda a derecha según --p (0 a 1, lo pone Letra.tsx). Cada palabra
+   calcula su propio avance (--q) con su tramo (--a, --k), así el llenado sigue bien aunque la línea ocupe dos renglones. */
+.letra-caja .letra-linea.actual:not(.pausa) { --p: 0; transform: scale(1.05); --desenfoque: 0px; --brillo: calc(var(--p) * 0.35); }
+.letra-linea .palabra { display: inline-block; }
+.letra-caja .letra-linea.actual .palabra { --q: clamp(0, calc((var(--p) - var(--a)) * var(--k)), 1);
+  color: transparent; -webkit-text-fill-color: transparent; -webkit-background-clip: text; background-clip: text;
+  background-image: linear-gradient(90deg, #fff calc(var(--q) * 130% - 30%), rgba(255, 255, 255, 0.5) calc(var(--q) * 130%));
+  transform: translateY(calc((1 - var(--q)) * 1.5px)); }
+.letra-linea.plana { color: rgba(255, 255, 255, 0.85); cursor: default; font-size: 22px; font-weight: 700; padding: 4px 0; filter: none; }
+.letra-linea.plana.vacia { padding: 8px 0; }
+/* Pausas: tres puntos que se encienden de a uno durante la pausa; el grupo respira */
+.letra-linea.pausa { --p: 0; display: flex; gap: 10px; cursor: default; padding: 16px 0 16px 2px; }
+.letra-linea.pausa span { --q: clamp(0, calc(var(--p) * 3.24 - var(--n)), 1); width: 13px; height: 13px; border-radius: 50%; background: rgba(255, 255, 255, 0.85);
+  opacity: calc(0.35 + var(--q) * 0.65); transform: scale(calc(0.75 + var(--q) * 0.3)); box-shadow: 0 0 calc(4px + var(--q) * 6px) rgba(255, 255, 255, calc(var(--q) * 0.8));
+  transition: opacity 0.25s, transform 0.35s cubic-bezier(0.34, 1.6, 0.64, 1); }
+.letra-linea.pausa.actual { animation: letra-respira 2.25s ease-in-out infinite; }
+@keyframes letra-respira { 0%, 100% { transform: scale(0.95); } 50% { transform: scale(1.05); } }
+.letra-estado { flex: 1; display: grid; place-items: center; padding: 24px; text-align: center; color: rgba(255, 255, 255, 0.65); font-size: 17px; font-weight: 600; }
+.letra-volver { position: sticky; z-index: 2; bottom: 24px; left: 50%; transform: translateX(-50%); display: block; margin: 0 auto; padding: 10px 18px; border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92); color: #111; font-weight: 700; font-size: 14px; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4); }
+.letra-pildora { display: inline-flex; align-items: center; gap: 6px; height: 44px; padding: 0 14px 0 12px; margin-left: 12px; border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1); color: #fff; font-size: 15px; font-weight: 700; flex: none; }
+.letra-pildora:active { background: rgba(255, 255, 255, 0.2); }
+@media (prefers-reduced-motion: reduce) {
+  .letra-hoja, .letra-hoja.cerrando { animation-duration: 0.01s; }
+  .letra-linea, .letra-caja .letra-linea.actual:not(.pausa), .letra-linea.pausa.actual { animation: none; transition: color 0.2s; transform: none; }
+  .letra-caja.sincronizada:not(.libre) .letra-linea { filter: none; }
+}
+
+/* Party: ordenar arrastrando el ≡ */
+.party-orden { position: relative; transition: transform 0.28s var(--rebote); }
+.party-orden.sin-transicion { transition: none; }
+.party-orden.levantada { z-index: 2; background: #2a2a2a; border-radius: 10px; box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55); scale: 1.02; }
+.party-orden .party-asa-mover { width: 36px; height: 44px; margin-right: -6px; }
+.party-proximas .party-orden.levantada .party-fila { opacity: 1; }

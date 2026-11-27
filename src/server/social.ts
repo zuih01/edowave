@@ -79,6 +79,8 @@ interface Social {
   oyentes: { id: number; nombre: string }[];
   /** Privacidad: ¿mis amigos ven lo que escucho y pueden escuchar conmigo? (null = todavía no se sabe) */
   compartir: boolean | null;
+  /** Privacidad: ¿los demás ven mis amigos en mi perfil? (null = todavía no se sabe) */
+  mostrarAmigos: boolean | null;
 }
 
 export const useSocial = create<Social>(() => ({
@@ -90,6 +92,7 @@ export const useSocial = create<Social>(() => ({
   esperando: false,
   oyentes: [],
   compartir: null,
+  mostrarAmigos: null,
 }));
 
 const conSesion = () => !!useCuenta.getState().token;
@@ -141,8 +144,8 @@ export async function quitarAmistad(amistad: number) {
 export async function cargarPrivacidad() {
   if (!conSesion()) return;
   try {
-    const r = await api<{ compartir: boolean; oyentes: { id: number; nombre: string }[] }>('/api/privacidad');
-    useSocial.setState({ compartir: r.compartir, oyentes: r.oyentes });
+    const r = await api<{ compartir: boolean; mostrarAmigos?: boolean; oyentes: { id: number; nombre: string }[] }>('/api/privacidad');
+    useSocial.setState({ compartir: r.compartir, mostrarAmigos: r.mostrarAmigos !== false, oyentes: r.oyentes });
   } catch {
     /* sin conexión */
   }
@@ -157,6 +160,18 @@ export async function cambiarPrivacidad(compartir: boolean) {
     if (compartir) contarAhora();
   } catch (e) {
     useSocial.setState({ compartir: antes });
+    throw e;
+  }
+}
+
+/** Mostrar (o no) mis amigos en mi perfil a los demás. Yo los sigo viendo en el mío. */
+export async function cambiarMostrarAmigos(mostrar: boolean) {
+  const antes = useSocial.getState().mostrarAmigos;
+  useSocial.setState({ mostrarAmigos: mostrar });
+  try {
+    await api('/api/privacidad', { method: 'PUT', body: { mostrarAmigos: mostrar } });
+  } catch (e) {
+    useSocial.setState({ mostrarAmigos: antes });
     throw e;
   }
 }
@@ -278,7 +293,7 @@ function conectar() {
   conexion?.abort();
   conexion = null;
   if (!conSesion()) {
-    useSocial.setState({ amigos: [], recibidas: [], enviadas: [], comunidad: [], siguiendo: null, esperando: false, oyentes: [], compartir: null });
+    useSocial.setState({ amigos: [], recibidas: [], enviadas: [], comunidad: [], siguiendo: null, esperando: false, oyentes: [], compartir: null, mostrarAmigos: null });
     return;
   }
   conexion = new AbortController();

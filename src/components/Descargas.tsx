@@ -32,7 +32,7 @@ export function MarcaDescarga({ id }: { id: string }) {
 /** Descarga o quita la descarga de una sola canción (menú ⋮). */
 export function alternarDescarga(t: Track) {
   if (estaDescargada(t.id) || estaEnDescarga(t.id)) return pedirQuitar([t.id], `"${t.title}"`);
-  if (descargar([t.id])) showSnack('Descargando… quedará guardada en este aparato');
+  if (descargar([t.id])) showSnack('Descargando… quedará guardada en este dispositivo');
 }
 
 /**
@@ -92,7 +92,7 @@ export function ConfirmarQuitarDescarga() {
         <div className="confirm-box">
           <h3>¿Quitar la descarga?</h3>
           <p>
-            {n === 1 ? `${pedido.nombre} se borrará` : `${canciones(n)} de ${pedido.nombre} se borrarán`} de este aparato. Seguirá en la
+            {n === 1 ? `${pedido.nombre} se borrará` : `${canciones(n)} de ${pedido.nombre} se borrarán`} de este dispositivo. Seguirá en la
             biblioteca y podrás escucharla con conexión o volver a descargarla.
           </p>
           <div className="pl-form-buttons">

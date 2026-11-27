@@ -23,6 +23,8 @@ interface Cuenta {
   /** Foto de perfil (archivo en el servidor) o null = se muestra la inicial. */
   foto: string | null;
   base: string;
+  /** La cuenta tiene acceso al panel (administrador o con permiso): ve cosas técnicas, como el registro. */
+  panel: boolean;
   /** El usuario eligió seguir sin cuenta (solo música local): no se le vuelve a pedir al abrir la app. */
   omitida: boolean;
 }
@@ -31,11 +33,11 @@ const KEY = 'cuenta';
 function leer(): Cuenta {
   try {
     const c = JSON.parse(localStorage.getItem(KEY) ?? 'null');
-    if (c) return { token: c.token ?? null, nombre: c.nombre ?? null, foto: c.foto ?? null, base: SERVIDOR_FIJO || (c.base ?? ''), omitida: !!c.omitida };
+    if (c) return { token: c.token ?? null, nombre: c.nombre ?? null, foto: c.foto ?? null, base: SERVIDOR_FIJO || (c.base ?? ''), panel: !!c.panel, omitida: !!c.omitida };
   } catch {
     /* nada guardado */
   }
-  return { token: null, nombre: null, foto: null, base: SERVIDOR_FIJO, omitida: false };
+  return { token: null, nombre: null, foto: null, base: SERVIDOR_FIJO, panel: false, omitida: false };
 }
 
 export const useCuenta = create<Cuenta>(() => leer());
@@ -105,12 +107,13 @@ interface Respuesta {
 
 export async function entrar(nombre: string, clave: string) {
   const r = await api<Respuesta>('/api/login', { method: 'POST', body: { nombre, clave, aparato: nombreAparato() } });
-  useCuenta.setState({ token: r.token, nombre: r.nombre, foto: r.foto ?? null, omitida: false });
+  useCuenta.setState({ token: r.token, nombre: r.nombre, foto: r.foto ?? null, panel: false, omitida: false });
+  void refrescarYo(); // ¿tiene acceso al panel?
 }
 
 export async function crearCuenta(codigo: string, nombre: string, clave: string) {
   const r = await api<Respuesta>('/api/registro', { method: 'POST', body: { codigo, nombre, clave, aparato: nombreAparato() } });
-  useCuenta.setState({ token: r.token, nombre: r.nombre, foto: null, omitida: false });
+  useCuenta.setState({ token: r.token, nombre: r.nombre, foto: null, panel: false, omitida: false });
 }
 
 /** Antes de crear la cuenta: ¿sirve el código? y, si se manda el nombre, ¿está libre? (lanza error si no) */
@@ -126,7 +129,7 @@ export async function salir() {
   } catch {
     /* sin conexión: igual se cierra en este aparato */
   }
-  useCuenta.setState({ token: null, nombre: null, foto: null });
+  useCuenta.setState({ token: null, nombre: null, foto: null, panel: false });
 }
 
 // ---------------- Foto de perfil (se guarda en el servidor: se ve igual en todos los aparatos) ----------------
@@ -178,8 +181,8 @@ export async function quitarFoto() {
 export async function refrescarYo() {
   if (!useCuenta.getState().token) return;
   try {
-    const r = await api<{ nombre: string; foto: string | null }>('/api/yo');
-    useCuenta.setState({ nombre: r.nombre, foto: r.foto ?? null });
+    const r = await api<{ nombre: string; foto: string | null; esAdmin?: boolean }>('/api/yo');
+    useCuenta.setState({ nombre: r.nombre, foto: r.foto ?? null, panel: !!r.esAdmin });
   } catch {
     /* sin conexión: queda lo guardado */
   }

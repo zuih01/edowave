@@ -44,7 +44,17 @@ const setCertMime: CertMiddleware = (req, res, next) => {
   next();
 };
 
+/** Versión de la app (la de PC, en tauri.conf.json): se muestra junto al perfil también en la web de computador. */
+const VERSION_APP: string = (() => {
+  try {
+    return JSON.parse(readFileSync('escritorio-pc/app/src-tauri/tauri.conf.json', 'utf8')).version ?? '';
+  } catch {
+    return '';
+  }
+})();
+
 export default defineConfig({
+  define: { 'import.meta.env.VITE_VERSION_APP': JSON.stringify(VERSION_APP) },
   plugins: [
     react(),
     certificateMime,
@@ -94,6 +104,8 @@ export default defineConfig({
     https: certs,
     proxy: proxyMusica,
   },
+  // App de PC: además de la app, la página del notch (segunda ventana; ver src/notch/notch.ts). Solo en PC.
+  build: process.env.VITE_PLATAFORMA === 'pc' ? { rollupOptions: { input: { main: 'index.html', notch: 'notch.html' } } } : undefined,
   // Vite tampoco debe buscar dependencias dentro de las copias de seguridad.
   optimizeDeps: { entries: ['index.html'] },
 });

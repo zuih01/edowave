@@ -31,8 +31,19 @@ export function idPlaylistSpotify(texto) {
 
 const conClave = () => !!(process.env.SPOTIFY_CLIENT_ID && process.env.SPOTIFY_CLIENT_SECRET);
 
+/**
+ * Spotify corta con 429 ("demasiadas peticiones") cuando varias personas importan seguido desde el VPS. El bloqueo
+ * dura poco: se espera lo que pide (Retry-After, máximo 6 s) y se prueba una vez más.
+ */
 async function pedir(url, opciones = {}) {
-  const r = await fetch(url, { ...opciones, signal: AbortSignal.timeout(15_000), headers: { 'User-Agent': NAVEGADOR, ...opciones.headers } });
+  const una = () => fetch(url, { ...opciones, signal: AbortSignal.timeout(15_000), headers: { 'User-Agent': NAVEGADOR, ...opciones.headers } });
+  let r = await una();
+  if (r.status === 429) {
+    const s = Number(r.headers.get('retry-after'));
+    await new Promise((ok) => setTimeout(ok, Math.min(Number.isFinite(s) && s > 0 ? s * 1000 : 3000, 6000)));
+    r = await una();
+  }
+  if (r.status === 429) throw Object.assign(new Error('Spotify respondió 429'), { codigo: 429 });
   return r;
 }
 

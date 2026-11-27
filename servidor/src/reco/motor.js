@@ -1096,6 +1096,7 @@ function buildModel(input) {
 	const byId = new Map(tracks.map((t) => [t.id, t]));
 	const stats = /* @__PURE__ */ new Map();
 	const transitions = /* @__PURE__ */ new Map();
+	const saltosTras = /* @__PURE__ */ new Map();
 	const hourHist = /* @__PURE__ */ new Map();
 	const nowHour = new Date(now).getHours();
 	for (const p of plays) {
@@ -1116,6 +1117,10 @@ function buildModel(input) {
 		if (p.prevTrackId && !p.skipped) {
 			const k = `${p.prevTrackId}>${p.trackId}`;
 			transitions.set(k, (transitions.get(k) ?? 0) + 1);
+		}
+		if (p.prevTrackId && p.skipped) {
+			const k = `${p.prevTrackId}>${p.trackId}`;
+			saltosTras.set(k, (saltosTras.get(k) ?? 0) + 1);
 		}
 		const t = byId.get(p.trackId);
 		if (t && !p.skipped) {
@@ -1241,7 +1246,8 @@ function buildModel(input) {
 		affinity,
 		sound,
 		mood,
-		transitions
+		transitions,
+		saltosTras
 	};
 }
 /** Silencio (archivos de prueba) o demasiado corta para recomendarla (intros, skits). */
@@ -1313,15 +1319,17 @@ function discoveries(m, mine, n, exclude) {
 	if (n <= 0 || !mine.length) return [];
 	const seeds = mine.slice(0, 12).map((id) => m.byId.get(id));
 	const colab = colabDe(m);
+	const yt = ytmTuyo(m);
 	const scored = [];
 	for (const t of m.input.tracks) {
 		if (exclude.has(t.id) || m.stats.has(t.id) || m.input.ratings[t.id] !== void 0 || isTestSilence(m, t.id)) continue;
 		if (!categoriaPermitida(m, t)) continue;
 		const fit = styleFit(m, t);
-		if (fit !== null && fit < .5) continue;
+		const y = yt.get(t.id) ?? 0;
+		if (fit !== null && fit < .5 && y < .5) continue;
 		let sim = 0;
 		for (const s of seeds) sim = Math.max(sim, similarity(m, s, t));
-		scored.push([t.id, sim + .3 * (fit ?? 0) + .45 * (colab.get(t.id) ?? 0) + .12 * (t.exito?.valor ?? 0) + .15 * dailyNoise(t.id, m.input.now)]);
+		scored.push([t.id, sim + .3 * (fit ?? 0) + .45 * (colab.get(t.id) ?? 0) + .6 * y + .12 * (t.exito?.valor ?? 0) + .15 * dailyNoise(t.id, m.input.now)]);
 	}
 	scored.sort((a, b) => b[1] - a[1]);
 	return diverse(m, scored.slice(0, 40).map(([id]) => id), n, 1);
@@ -1338,9 +1346,12 @@ function shortcuts(m, n) {
 	const chart = billboardIds(m);
 	if (mine.length < 5) {
 		const seen = new Set(mine);
-		return [...mine, ...diverse(m, chart.filter((id) => !seen.has(id)), n - mine.length, 2)].slice(0, n);
+		const yt = [...ytmTuyo(m).entries()].filter(([id]) => !seen.has(id) && m.input.ratings[id] !== -1 && !isTestSilence(m, id) && categoriaPermitida(m, m.byId.get(id))).sort((a, b) => b[1] - a[1]).map(([id]) => id);
+		const conYt = [...mine, ...diverse(m, yt, Math.min(8, n - mine.length), 1)];
+		const vistas = new Set(conYt);
+		return [...conYt, ...diverse(m, chart.filter((id) => !vistas.has(id)), n - conYt.length, 2)].slice(0, n);
 	}
-	const k = mine.length >= 15 ? 3 : 2;
+	const k = (mine.length >= 15 ? 3 : 2) + (ytmTuyo(m).size ? 1 : 0);
 	const own = diverse(m, mine, n - k, 3);
 	const used = new Set(own);
 	const nuevas = discoveries(m, mine, k, used);
@@ -1349,7 +1360,8 @@ function shortcuts(m, n) {
 	[
 		3,
 		10,
-		18
+		18,
+		23
 	].slice(0, nuevas.length).forEach((pos, i) => out.splice(Math.min(pos, out.length), 0, nuevas[i]));
 	return [...out, ...relleno].slice(0, n);
 }
@@ -1878,7 +1890,6 @@ const FAMILIES = {
 		"dance",
 		"garage",
 		"trance",
-		"synthwave",
 		"disco",
 		"electro",
 		"hi-nrg",
@@ -1908,25 +1919,182 @@ const FAMILIES = {
 		"lounge",
 		"trip hop",
 		"chill",
-		"ambient",
+		"ambient"
+	],
+	mexicano: [],
+	phonk: [
+		"phonk",
+		"funk carioca",
+		"baile funk",
+		"funk mandel",
+		"mandelão",
+		"automotivo",
+		"brazilian funk",
+		"montagem"
+	],
+	hyperpop: [
+		"hyperpop",
+		"digicore",
+		"glitchcore",
+		"pc music",
+		"bubblegum bass",
+		"dariacore",
+		"scenecore",
+		"hexd"
+	],
+	nightcore: ["nightcore", "daycore"],
+	chiptune: [
+		"chiptune",
+		"8-bit",
+		"8bit",
+		"bitpop",
+		"chipwave",
+		"chip music"
+	],
+	vaporwave: [
+		"vaporwave",
+		"future funk",
+		"mallsoft",
+		"slushwave",
+		"plunderphonics",
+		"signalwave",
+		"hardvapour",
+		"seapunk"
+	],
+	synthwave: [
+		"synthwave",
+		"retrowave",
+		"outrun",
+		"darksynth",
+		"chillwave",
+		"dreamwave"
+	],
+	breakcore: [
+		"breakcore",
+		"digital hardcore",
+		"speedcore",
+		"drill 'n' bass",
+		"drill and bass"
+	],
+	dnb: [
+		"drum and bass",
+		"drum'n'bass",
+		"drum & bass",
+		"drum n bass",
+		"dnb",
+		"jungle",
+		"liquid funk",
+		"neurofunk"
+	],
+	witchhouse: ["witch house"],
+	rapinternet: [
+		"cloud rap",
+		"rage",
+		"pluggnb",
+		"plugg",
+		"sigilkore",
+		"soundcloud rap",
+		"emo rap",
+		"jerk"
+	],
+	lofi: [
+		"lofi",
+		"lofi hip hop",
+		"lo-fi hip hop",
+		"lofi beats",
+		"chillhop",
+		"jazzhop",
+		"jazz hop"
+	],
+	bedroom: [
+		"bedroom pop",
 		"lo-fi",
-		"lofi"
+		"lo-fi indie"
 	]
 };
 const FAMILY_KEYS = Object.keys(FAMILIES);
 const ASIATICO = /k-pop|kpop|j-pop|c-pop|mandopop|korean/;
+const MEXICANO = /m[uú]sica mexicana|regional mexican|\bmexican|corrido|norte[nñ]|sierre[nñ]|mariachi|ranchera|tejano|grupero|\bbanda\b(?! sonora)/;
+const escapar = (w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+/** Palabra entera: "rage" no es "garage", ni "jungle" de "jungle pop"… sí (es lo mismo). */
+const palabraEntera = (ws) => new RegExp(`(?:^|[^\\p{L}])(?:${ws.map(escapar).join("|")})(?:$|[^\\p{L}])`, "u");
+const PHONK = new RegExp(FAMILIES.phonk.join("|"));
+/** Familias de internet: se reconocen por palabra entera y sus etiquetas no cuentan para otras familias. */
+const ESCENAS_INTERNET = [
+	"hyperpop",
+	"nightcore",
+	"chiptune",
+	"vaporwave",
+	"synthwave",
+	"breakcore",
+	"dnb",
+	"witchhouse",
+	"rapinternet",
+	"lofi",
+	"bedroom"
+];
+const RE_INTERNET = new Map(ESCENAS_INTERNET.map((f) => [f, palabraEntera(FAMILIES[f])]));
+const deInternet = (g) => [...RE_INTERNET.values()].some((re) => re.test(g));
 /** ¿La etiqueta `g` es de la familia `f`? ("k-pop" no cuenta como pop a secas; "pop metal"/"metal" no como rock.) */
 function enFamilia(f, g) {
+	if (f === "mexicano") return MEXICANO.test(g);
+	if (f === "bedroom" && RE_INTERNET.get("lofi").test(g)) return false;
+	const reInternet = RE_INTERNET.get(f);
+	if (reInternet) return reInternet.test(g);
+	if (f !== "phonk" && PHONK.test(g)) return false;
+	if (deInternet(g)) return false;
 	if (f === "pop" && ASIATICO.test(g)) return false;
 	if (f === "rock" && /metal/.test(g)) return false;
 	return FAMILIES[f].some((w) => g.includes(w));
 }
+/** Integrantes de un texto de artista ("DJ FKU, Mc Dido", "ZXKAI y slxughter"). */
+const integrantes$1 = (artista) => artista.split(/\s*(?:,|;|&|\/|\bfeat\.?|\bft\.?|\bx\b|\by\b|\be\b|\band\b|\bwith\b|\bcon\b)\s*/i).map((x) => normalize(x)).filter((x) => x.length > 1);
+/**
+* ¿El título o el artista delatan phonk? Lo usual: "MONTAGEM …", "MTG - …", "… PHONK", "NO BATIDÃO", "FUNK …"
+* en mayúsculas (no "Uptown Funk"), productores "-MANE" (ICEDMANE, Scythermane) y versiones "Slowed" con un MC
+* brasileño.
+*/
+function phonkPorNombre(t) {
+	const titulo = t.title;
+	if (/\b(?:phonk|montagem|mtg|automotivo|batid[aã]o|mandel[aã]o)\b/i.test(titulo)) return true;
+	if (t.year && t.year < 2018) return false;
+	const version = /\s*(?:-\s*|[([])(?:ultra |super )?(?:slowed|sped up|slown down)[^)\]]*[)\]]?\s*$/i;
+	const base = titulo.replace(version, "");
+	const mayusculas = /\p{Lu}/u.test(base) && base === base.toUpperCase();
+	if (mayusculas && /\bFUNK\b/.test(base)) return true;
+	const miembros = integrantes$1(t.artist);
+	const mc = miembros.some((a) => /^mc\b|\bmc$/.test(a));
+	const slowed = version.test(titulo);
+	if ((mayusculas || slowed) && miembros.some((a) => a.length >= 6 && /mane$/.test(a.replace(/\s/g, "")))) return true;
+	const otroEstilo = t.genres.some((g) => /pop|r&b|rnb|soul|rock|country|jazz/i.test(g));
+	if (slowed && (mayusculas || mc) && !otroEstilo) return true;
+	return false;
+}
+/**
+* ¿Lofi para estudiar? Lofi Girl y sus sellos casi nunca traen género (o solo "Electronic"): se nota en el
+* artista o el álbum ("Sleepermane y Lofi Girl", "lofi hip hop radio").
+*/
+function lofiPorNombre(t) {
+	if (integrantes$1(t.artist).some((a) => /^(?:lofi girl|chillhop music|chillhop|college music|lofi records|dreamhop|steezyasfuck)$/.test(a))) return true;
+	return /\blofi\b|\bchillhop\b|lo-fi (?:hip hop|beats)|study beats/i.test(`${t.artist} ${t.album}`);
+}
+/** Phonk por sí misma (géneros, título o artista), sin mirar a otras canciones. */
+const esPhonkPropio = (t) => phonkPorNombre(t) || t.genres.some((g) => PHONK.test(g.toLowerCase()));
 const familyCache = /* @__PURE__ */ new WeakMap();
 /** Vector de familias de una canción (si no tiene géneros, usa los de su artista en tu biblioteca). */
 function familiesOf(m, t) {
 	let c = familyCache.get(m);
 	if (!c) {
 		const byArtist = /* @__PURE__ */ new Map();
+		const cuenta = /* @__PURE__ */ new Map();
+		for (const x of m.input.tracks) {
+			const ph = esPhonkPropio(x) ? 1 : 0;
+			for (const a of integrantes$1(x.artist)) {
+				const [p, n] = cuenta.get(a) ?? [0, 0];
+				cuenta.set(a, [p + ph, n + 1]);
+			}
+		}
+		const phonkeros = new Set([...cuenta].filter(([, [p, n]]) => p > 0 && 2 * p >= n).map(([a]) => a));
 		for (const x of m.input.tracks) {
 			if (!x.genres.length) continue;
 			const k = normalize(x.artist);
@@ -1934,6 +2102,7 @@ function familiesOf(m, t) {
 		}
 		c = {
 			byArtist,
+			phonkeros,
 			vec: /* @__PURE__ */ new Map()
 		};
 		familyCache.set(m, c);
@@ -1946,6 +2115,10 @@ function familiesOf(m, t) {
 		v = FAMILY_KEYS.map((f) => tags.filter((g) => enFamilia(f, g)).length);
 		if (v.every((x) => x === 0)) v = null;
 	}
+	const generica = t.genres.every((g) => /^(?:electronic|electronica|dance|edm|latin|brazilian|hip-hop\/rap)$/i.test(g.trim()));
+	const solo = (familia) => FAMILY_KEYS.map((f) => f === familia ? 1 : 0);
+	if (phonkPorNombre(t) || generica && integrantes$1(t.artist).some((a) => c.phonkeros.has(a))) v = solo("phonk");
+	else if (generica && lofiPorNombre(t)) v = solo("lofi");
 	c.vec.set(t.id, v);
 	return v;
 }
@@ -1961,14 +2134,53 @@ const PARIENTES = [
 	["hiphop", "rnb"],
 	["electronic", "kpop"],
 	["jazz", "soft"],
-	["country", "soft"]
+	["country", "soft"],
+	["phonk", "hiphop"],
+	["phonk", "electronic"],
+	["phonk", "rapinternet"],
+	["hyperpop", "pop"],
+	["hyperpop", "electronic"],
+	["hyperpop", "nightcore"],
+	["hyperpop", "chiptune"],
+	["hyperpop", "rapinternet"],
+	["hyperpop", "breakcore"],
+	["hyperpop", "vaporwave"],
+	["vaporwave", "chiptune"],
+	["nightcore", "chiptune"],
+	["nightcore", "electronic"],
+	["nightcore", "kpop"],
+	["chiptune", "electronic"],
+	["vaporwave", "electronic"],
+	["vaporwave", "rnb"],
+	["synthwave", "electronic"],
+	["breakcore", "electronic"],
+	["witchhouse", "electronic"],
+	["dnb", "electronic"],
+	["lofi", "hiphop"],
+	["bedroom", "rock"],
+	["bedroom", "pop"]
 ];
+/**
+* Tan cercanas que en la radio se mezclan sin problema: el corrido tumbado es casi urbano latino, el cloud rap
+* es rap, el lofi viene del jazz, el future funk y el synthwave miran a los 80, el breakcore sale del jungle.
+*/
+const CERCANAS = [
+	["mexicano", "latin"],
+	["rapinternet", "hiphop"],
+	["lofi", "jazz"],
+	["vaporwave", "synthwave"],
+	["breakcore", "dnb"]
+];
+const familiaTop = (v) => FAMILY_KEYS[v.indexOf(Math.max(...v))];
+const enPares = (pares, a, b) => {
+	const x = familiaTop(a);
+	const y = familiaTop(b);
+	return pares.some(([p, q]) => p === x && q === y || p === y && q === x);
+};
 function emparentadas(a, b) {
-	const top = (v) => FAMILY_KEYS[v.indexOf(Math.max(...v))];
-	const x = top(a);
-	const y = top(b);
-	return PARIENTES.some(([p, q]) => p === x && q === y || p === y && q === x);
+	return enPares(PARIENTES, a, b) || enPares(CERCANAS, a, b);
 }
+const cercanas = (a, b) => enPares(CERCANAS, a, b);
 const PALABRAS = {
 	es: [
 		"el",
@@ -2009,7 +2221,10 @@ const PALABRAS = {
 		"loca",
 		"ojos",
 		"besos",
-		"beso"
+		"beso",
+		"te",
+		"nunca",
+		"mia"
 	],
 	en: [
 		"the",
@@ -2117,11 +2332,8 @@ const PALABRAS = {
 		"beijo",
 		"ela",
 		"ele",
-		"do",
-		"da",
 		"dos",
 		"das",
-		"um",
 		"uma",
 		"sem",
 		"mais",
@@ -2130,7 +2342,6 @@ const PALABRAS = {
 		"muito",
 		"agora",
 		"nunca",
-		"ao",
 		"aos",
 		"tem",
 		"vai",
@@ -2207,8 +2418,8 @@ const PALABRAS = {
 const GENERO_IDIOMA = [
 	[/k-pop|kpop|korean|k-r&b|k-hip/, "ko"],
 	[/j-pop|jpop|j-rock|japanese|anime|city pop/, "ja"],
-	[/latin|reggaeton|reggaet|bachata|salsa|cumbia|merengue|flamenco|ranchera|corrido|en espanol|en español|regional mexican|trap latino|dembow|banda/, "es"],
-	[/mpb|sertanejo|bossa|samba|funk carioca|axe|pagode|brazil/, "pt"],
+	[/latin|reggaeton|reggaet|bachata|salsa|cumbia|merengue|flamenco|ranchera|corrido|en espanol|en español|regional mexican|m[uú]sica mexicana|norte[nñ]o|urbano|trap latino|dembow|\bbanda\b(?! sonora)/, "es"],
+	[/mpb|sertanejo|bossa|samba|funk carioca|baile funk|mandel|axe|pagode|brazil/, "pt"],
 	[/italian|canzone|italo pop/, "it"],
 	[/chanson|french|variete francaise/, "fr"],
 	[/^english$/, "en"]
@@ -2352,6 +2563,7 @@ function similarity(m, a, b) {
 	const co = (m.transitions.get(`${a.id}>${b.id}`) ?? 0) + (m.transitions.get(`${b.id}>${a.id}`) ?? 0);
 	s += .25 * Math.min(1, co / 3);
 	s += .3 * (m.input.vecinos?.get(a.id)?.get(b.id) ?? 0);
+	s += .35 * ytmEntre(m, a.id, b.id);
 	const anioA = epocaDe(a);
 	const anioB = epocaDe(b);
 	if (anioA && anioB) {
@@ -2382,6 +2594,7 @@ function radio(m, seedIds, exclude, n) {
 	if (!seeds.length) return shortcuts(m, n).filter((id) => !exclude.has(id));
 	const ancla = m.byId.get(seedIds[0]) ?? seeds[0].t;
 	const famAncla = familiesOf(m, ancla);
+	const nicho = !!famAncla && [...ESCENAS_INTERNET, "phonk"].includes(familiaTop(famAncla));
 	const idiomaAncla = idiomaDe(m, ancla);
 	const catsRadio = new Set([ancla, ...seeds.map((s) => s.t)].flatMap(mundoDe));
 	const otroMundo = (t) => mundoDe(t).some((c) => !catsRadio.has(c));
@@ -2393,10 +2606,10 @@ function radio(m, seedIds, exclude, n) {
 		let p = 0;
 		const f = familiesOf(m, t);
 		if (famAncla) {
-			if (!f) p += normalize(t.artist) === normalize(ancla.artist) ? 0 : .35;
+			if (!f) p += normalize(t.artist) === normalize(ancla.artist) ? 0 : nicho ? .6 : .35;
 			else {
 				const c = cosine(famAncla, f);
-				if (c < .2) p += emparentadas(famAncla, f) ? .45 : .9;
+				if (c < .2) p += cercanas(famAncla, f) ? .2 : emparentadas(famAncla, f) ? .45 : .9;
 				else if (c < .5) p += .3;
 			}
 		}
@@ -2409,8 +2622,10 @@ function radio(m, seedIds, exclude, n) {
 			else if (gap > 5) p += .1;
 		} else if (anioAncla && !anioT) p += .15;
 		const idioma = idiomaDe(m, t);
-		if (idiomaAncla && idioma && idioma !== idiomaAncla) p += idiomaAncla === "ko" && idioma === "en" || idiomaAncla === "en" && idioma === "ko" ? .25 : 2.5;
-		else if (idiomaAncla && !idioma && normalize(t.artist) !== normalize(ancla.artist)) p += .45;
+		if (idiomaAncla && idioma && idioma !== idiomaAncla) {
+			const par = (x, y) => idiomaAncla === x && idioma === y || idiomaAncla === y && idioma === x;
+			p += par("ko", "en") || par("es", "pt") ? .25 : 2.5;
+		} else if (idiomaAncla && !idioma && normalize(t.artist) !== normalize(ancla.artist)) p += .45;
 		const dv = distanciaVibe(ancla, t);
 		if (dv !== null) {
 			if (dv > .34) p += .7;
@@ -2425,14 +2640,23 @@ function radio(m, seedIds, exclude, n) {
 	const wsum = seeds.reduce((x, s) => x + s.w, 0);
 	const scored = [];
 	const fuera = /* @__PURE__ */ new Map();
+	const confianzaYt = confianzaEnYoutube(m);
 	for (const t of m.input.tracks) {
 		if (exclude.has(t.id) || isTestSilence(m, t.id) || otroMundo(t)) continue;
 		let sim = 0;
 		for (const s of seeds) sim += s.w * similarity(m, s.t, t);
-		let p = fueraDeLugar(t);
+		const yA = confianzaYt * ytmEntre(m, ancla.id, t.id);
+		const yL = confianzaYt * ytmEntre(m, seeds[0].t.id, t.id);
+		let p = fueraDeLugar(t) * (1 - .75 * Math.max(yA, yL));
 		if (catsRadio.size && !mundoDe(t).some((c) => catsRadio.has(c))) p += 1.2;
 		fuera.set(t.id, p);
-		let score = .45 * (sim / wsum) + .4 * similarity(m, ancla, t) + .15 * norm(m.baseAffinity.get(t.id) ?? 0) - p;
+		let score = .45 * (sim / wsum) + .4 * similarity(m, ancla, t) + .25 * norm(m.baseAffinity.get(t.id) ?? 0) - p;
+		score += .9 * yA + .4 * yL;
+		if (m.input.ratings[t.id] === 1) score += .15;
+		const st = m.stats.get(t.id);
+		if (st && st.skips >= 2 && st.skips > st.completes) score -= .3;
+		const saltada = (m.saltosTras.get(`${ancla.id}>${t.id}`) ?? 0) + (m.saltosTras.get(`${seeds[0].t.id}>${t.id}`) ?? 0);
+		if (saltada) score -= Math.min(.8, .4 * saltada);
 		if (t.pop !== void 0) score += .2 * (t.pop - .5);
 		score += .08 * (t.exito?.valor ?? 0);
 		if (m.input.ratings[t.id] === -1) score -= 1.5;
@@ -2552,6 +2776,57 @@ function colabDe(m) {
 		if (max > 0) for (const [k, v] of c) c.set(k, v / max);
 	}
 	colabCache.set(m, c);
+	return c;
+}
+/** Qué tan juntas pone YouTube Music a dos canciones (0–1), en cualquier sentido. */
+function ytmEntre(m, a, b) {
+	const y = m.input.ytm;
+	if (!y?.size) return 0;
+	return Math.max(y.get(a)?.get(b) ?? 0, y.get(b)?.get(a) ?? 0);
+}
+/**
+* Cuánto confía TU cuenta en YouTube Music (0,75–1,2), aprendido de cómo reaccionas en la radio: si terminas más
+* las que propuso YouTube Music que las del algoritmo propio, pesa más; si las saltas más, pesa menos. Nunca baja
+* de 0,75: YouTube Music sigue mandando para que la radio sea coherente.
+*/
+function confianzaEnYoutube(m) {
+	let aY = 0;
+	let eY = 0;
+	let aE = 0;
+	let eE = 0;
+	for (const r of m.input.resultados ?? []) if (r.motivo === "youtube") r.exito ? aY++ : eY++;
+	else if (r.motivo === "radio") r.exito ? aE++ : eE++;
+	const tasaE = (aE + 3) / (aE + eE + 4);
+	const tasaY = (aY + 6 * tasaE) / (aY + eY + 6);
+	return Math.max(.75, Math.min(1.2, 1 + 1.5 * (tasaY - tasaE)));
+}
+/** De dónde salió una canción de la radio, para aprender: "youtube" si YouTube Music la pone cerca de la semilla. */
+function motivoRadio(m, semilla, id) {
+	return ytmEntre(m, semilla, id) >= .3 ? "youtube" : "radio";
+}
+const ytmCache = /* @__PURE__ */ new WeakMap();
+/**
+* Lo que YouTube Music recomienda a partir de lo TUYO DE AHORA (0–1): lo último que escuchaste entero, lo que
+* buscaste y tocaste, y tus favoritas de siempre (pesan menos). Así lo nuevo que te gusta cambia el feed pronto.
+*/
+function ytmTuyo(m) {
+	let c = ytmCache.get(m);
+	if (c) return c;
+	c = /* @__PURE__ */ new Map();
+	const y = m.input.ytm;
+	if (y?.size) {
+		const tuyas = heardIds(m);
+		const semillas = /* @__PURE__ */ new Map();
+		const poner = (id, w) => semillas.set(id, Math.max(semillas.get(id) ?? 0, w));
+		[...tuyas].sort((a, b) => (m.stats.get(b)?.lastPlayed ?? 0) - (m.stats.get(a)?.lastPlayed ?? 0)).slice(0, 25).forEach((id, i) => poner(id, 1 - .5 * i / 25));
+		(m.input.buscadas ?? []).filter((id) => m.byId.has(id) && m.input.ratings[id] !== -1).forEach((id, i) => poner(id, .9 - .04 * i));
+		[...tuyas].sort((a, b) => (m.baseAffinity.get(b) ?? 0) - (m.baseAffinity.get(a) ?? 0)).slice(0, 25).forEach((id) => poner(id, .45));
+		for (const [s, w] of semillas) for (const [v, x] of y.get(s) ?? []) c.set(v, (c.get(v) ?? 0) + w * x);
+		let max = 0;
+		for (const v of c.values()) max = Math.max(max, v);
+		if (max > 0) for (const [k, v] of c) c.set(k, v / max);
+	}
+	ytmCache.set(m, c);
 	return c;
 }
 const HUECO_SESION = 18e5;
@@ -3766,4 +4041,4 @@ function matchChart(tracks, chart) {
 	}
 	return hits;
 }
-export { MIN_HEARD, MOODS, billboardIds, buildModel, buscarTodo, clasificarEscenas, descubrimientoSemanal, groupLibrary, groupScore, heardIds, interpretarBusqueda, listaDeBusqueda, marcarExitos, matchChart, mixesDiarios, mixesParaTi, moodMix, paraTi, radio, radioChain, rediscover, shortcuts, shufflePool };
+export { MIN_HEARD, MOODS, billboardIds, buildModel, buscarTodo, clasificarEscenas, confianzaEnYoutube, descubrimientoSemanal, groupLibrary, groupScore, heardIds, interpretarBusqueda, listaDeBusqueda, marcarExitos, matchChart, mixesDiarios, mixesParaTi, moodMix, motivoRadio, paraTi, radio, radioChain, rediscover, shortcuts, shufflePool };

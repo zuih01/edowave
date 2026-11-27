@@ -1,4 +1,5 @@
 import { useParty } from '../server/party';
+import { PanelParty } from '../screens/Party';
 import { GuardarColaBoton } from '../components/GuardarCola';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Cover, fallbackBackground } from '../components/Cover';
@@ -15,11 +16,13 @@ import {
   PlusIcon,
   PrevIcon,
   QueueIcon,
+  LetraIcon,
   RepeatIcon,
   SearchIcon,
   ShuffleIcon,
   ThumbDownIcon,
   ThumbUpIcon,
+  PartyIcon,
 } from '../components/Icons';
 import { PlaylistCover } from '../components/PlaylistCover';
 import { openCreatePlaylist, openImportarSpotify, openPlaylistOptions, openSaveToPlaylist } from '../components/PlaylistSheets';
@@ -44,20 +47,26 @@ import { InicioEscritorio } from './InicioEscritorio';
 import { PlaylistEscritorio } from './PlaylistEscritorio';
 import { empezarArrastre } from './seleccion';
 import { VistaReproductor } from './VistaReproductor';
+import { VistaLetra } from '../components/Letra';
+import { useLetraUi } from '../player/letras';
 import { ActualizacionPc } from './ActualizacionPc';
 import { useDiscordPc } from './DiscordPc';
 import { useBandejaPc } from './BandejaPc';
+import { useNotchPc } from './NotchPc';
 import { useSearchHistory } from '../library/searchHistory';
 import { closeAllOverlaysThen, closeOverlay } from '../nav';
-import { arrastrarVentana, BotonesVentana, esAppPc } from './VentanaPc';
-import { versionApp } from '../estadisticas';
+import { arrastrarVentana, BotonesVentana } from './VentanaPc';
+import { etiquetaVersion } from '../estadisticas';
 import { AyudaAtajos, useAtajos } from './atajos';
 
 /**
  * Ir a otra pantalla desde la barra de arriba o la de la izquierda. Si la vista de reproducción (o un menú) está
  * abierta encima, primero se cierra; así el buscador, una playlist o la biblioteca se ven de inmediato.
  */
-const ir = (fn: () => void) => () => closeAllOverlaysThen(fn);
+const ir = (fn: () => void) => () => {
+  useLetraUi.getState().cerrar(); // también si ya estabas en esa pantalla (tocar Inicio estando en Inicio)
+  closeAllOverlaysThen(fn);
+};
 
 /** Abre el buscador con el cursor ya puesto en el campo, para escribir de inmediato. */
 function buscar() {
@@ -78,11 +87,13 @@ type Panel = 'ahora' | 'fila' | null;
 export function Escritorio() {
   useDiscordPc(); // la canción que suena, en Discord (solo app de PC)
   useBandejaPc(); // minimizar a la bandeja (si está encendido)
+  useNotchPc(); // notch arriba de la pantalla (si está encendido)
   const loaded = useLibrary((s) => s.loaded);
   const { tab, stack } = useNav();
   const page = stack[stack.length - 1];
   const hayCancion = usePlayer((s) => !!currentTrack(s));
   const expandido = usePlayer((s) => s.expanded);
+  const letraAbierta = useLetraUi((s) => s.abierta);
   const [panel, setPanel] = useState<Panel>(() => {
     try {
       const v = localStorage.getItem('escPanel');
@@ -91,7 +102,9 @@ export function Escritorio() {
       return 'ahora';
     }
   });
+  const partyEnPanel = useParty((s) => s.panelPc && !!s.party);
   const cambiarPanel = (p: Panel) => {
+    useParty.setState({ panelPc: false }); // elegir otro panel cierra el de la Party
     setPanel(p);
     try {
       localStorage.setItem('escPanel', p ?? 'no');
@@ -102,11 +115,17 @@ export function Escritorio() {
   const centro = useRef<HTMLElement>(null);
   useEffect(() => {
     centro.current?.scrollTo(0, 0); // (en Chrome nuevo devuelve una promesa: no se retorna)
+    // Ir a otra pantalla (inicio, una playlist, un artista…) cierra la letra: si no, quedaba encima tapándola.
+    useLetraUi.getState().cerrar();
   }, [tab, page]);
   /** Alt + Shift + Q / R: muestra u oculta la fila o lo que suena (si ya estaba, se cierra). */
   const alternarPanel = useCallback((p: 'ahora' | 'fila') => {
+    const enParty = useParty.getState().panelPc;
+    // En una Party, la fila ES la Party: el atajo de la fila abre o cierra su panel.
+    if (p === 'fila' && useParty.getState().party) return useParty.setState({ panelPc: !enParty });
+    useParty.setState({ panelPc: false });
     setPanel((antes) => {
-      const nuevo = antes === p ? null : p;
+      const nuevo = antes === p && !enParty ? null : p;
       try {
         localStorage.setItem('escPanel', nuevo ?? 'no');
       } catch {
@@ -138,7 +157,7 @@ export function Escritorio() {
   );
 
   return (
-    <div className={`esc ${panel && hayCancion ? 'con-panel' : ''}`}>
+    <div className={`esc ${(panel && hayCancion) || partyEnPanel ? 'con-panel' : ''}`}>
       <Arriba />
       <Lateral />
       <main ref={centro} className="esc-centro">
@@ -146,10 +165,16 @@ export function Escritorio() {
           {contenido}
         </div>
       </main>
-      {panel && hayCancion && (
-        <aside className="esc-derecha">{panel === 'fila' ? <PanelFila cerrar={() => cambiarPanel(null)} /> : <PanelAhora />}</aside>
+      {partyEnPanel ? (
+        <aside className="esc-derecha">
+          <PanelParty />
+        </aside>
+      ) : (
+        panel &&
+        hayCancion && <aside className="esc-derecha">{panel === 'fila' ? <PanelFila cerrar={() => cambiarPanel(null)} /> : <PanelAhora />}</aside>
       )}
       {expandido && hayCancion && <VistaReproductor />}
+      {letraAbierta && !expandido && hayCancion && <VistaLetra />}
       <BarraReproductor panel={panel} cambiarPanel={cambiarPanel} />
       <ActualizacionPc />
       <AyudaAtajos />
@@ -165,13 +190,45 @@ function Arriba() {
   return (
     <header className="esc-arriba" onMouseDown={arrastrarVentana}>
       <div className="esc-flechas">
-        <button className="esc-flecha" onClick={() => closeAllOverlaysThen(() => history.back())} disabled={!stack.length} aria-label="Atrás" title="Atrás">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <button
+          className="esc-flecha"
+          onClick={() => closeAllOverlaysThen(() => history.back())}
+          disabled={!stack.length}
+          aria-label="Atrás"
+          title="Atrás"
+        >
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
             <path d="M15 5l-7 7 7 7" />
           </svg>
         </button>
-        <button className="esc-flecha" onClick={ir(() => useNav.getState().forward())} disabled={!adelante.length} aria-label="Adelante" title="Adelante">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <button
+          className="esc-flecha"
+          onClick={ir(() => useNav.getState().forward())}
+          disabled={!adelante.length}
+          aria-label="Adelante"
+          title="Adelante"
+        >
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
             <path d="M9 5l7 7-7 7" />
           </svg>
         </button>
@@ -183,8 +240,12 @@ function Arriba() {
         <BuscadorDesplegable />
       </div>
       <div className="esc-arriba-der">
-        {/* La versión instalada de la app de PC (en la web no hay número de beta) */}
-        {esAppPc && versionApp !== 'web' && <span className="esc-version" title="Versión de la app">{versionApp}</span>}
+        {/* La versión de la app ("stable-1.0.0"): en la app de PC y en la web de computador (no en el teléfono). */}
+        {etiquetaVersion() && (
+          <span className="esc-version" title="Versión de la app">
+            {etiquetaVersion()}
+          </span>
+        )}
         <ProfileButton />
         <BotonesVentana />
       </div>
@@ -254,7 +315,10 @@ function BuscadorDesplegable() {
               setAbierto(false);
               input.current?.blur();
               const actual = stack[stack.length - 1];
-              if (actual?.type === 'resultados') useNav.setState({ stack: [...stack.slice(0, -1), { type: 'resultados', q: q.trim() }] });
+              if (actual?.type === 'resultados')
+                useNav.setState({
+                  stack: [...stack.slice(0, -1), { type: 'resultados', q: q.trim() }],
+                });
               else useNav.getState().push({ type: 'resultados', q: q.trim() });
             }
           }}
@@ -304,11 +368,22 @@ function Lateral() {
 
   return (
     <nav className="esc-lateral" aria-label="Tu biblioteca">
-      <button className={`esc-lat-btn ${tab === 'library' && !stack.length ? 'on' : ''}`} onClick={ir(() => setTab('library'))} title="Tu biblioteca" aria-label="Tu biblioteca">
+      <button
+        className={`esc-lat-btn ${tab === 'library' && !stack.length ? 'on' : ''}`}
+        onClick={ir(() => setTab('library'))}
+        title="Tu biblioteca"
+        aria-label="Tu biblioteca"
+      >
         <LibraryIcon filled={tab === 'library' && !stack.length} />
       </button>
       <div className="esc-mas-wrap">
-        <button className={`esc-lat-btn esc-mas ${menu ? 'abierto' : ''}`} onClick={() => setMenu(!menu)} title="Crear" aria-label="Crear" aria-expanded={menu}>
+        <button
+          className={`esc-lat-btn esc-mas ${menu ? 'abierto' : ''}`}
+          onClick={() => setMenu(!menu)}
+          title="Crear"
+          aria-label="Crear"
+          aria-expanded={menu}
+        >
           {menu ? <CloseIcon size={22} /> : <PlusIcon />}
         </button>
         {menu && (
@@ -480,7 +555,11 @@ function BarraReproductor({ panel, cambiarPanel }: { panel: Panel; cambiarPanel:
   const rating = usePlayer((s) => (track ? s.ratings[track.id] : undefined));
   const { toggle, next, prev, setRepeat, toggleShuffle, rate } = usePlayer.getState();
   const siguiendo = useSocial((s) => s.siguiendo !== null);
-  const sinModos = useParty((s) => !!s.party) || siguiendo;
+  const enParty = useParty((s) => !!s.party);
+  const partyPanel = useParty((s) => s.panelPc && !!s.party);
+  const sinModos = enParty || siguiendo;
+  const activo = (p: Panel) => panel === p && !partyPanel;
+  const letraAbierta = useLetraUi((s) => s.abierta);
 
   return (
     <footer className="esc-abajo">
@@ -512,7 +591,12 @@ function BarraReproductor({ panel, cambiarPanel }: { panel: Panel; cambiarPanel:
             >
               <ThumbUpIcon filled={rating === 1} size={20} />
             </button>
-            <button className="icon-btn esc-chico dim" onClick={() => openSaveToPlaylist(track)} aria-label="Guardar en playlist" title="Guardar en playlist">
+            <button
+              className="icon-btn esc-chico dim"
+              onClick={() => openSaveToPlaylist(track)}
+              aria-label="Guardar en playlist"
+              title="Guardar en playlist"
+            >
               <PlaylistAddIcon size={20} />
             </button>
           </>
@@ -521,13 +605,26 @@ function BarraReproductor({ panel, cambiarPanel }: { panel: Panel; cambiarPanel:
 
       <div className="esc-abajo-centro">
         <div className="esc-controles">
-          <button className={`icon-btn ${shuffle ? 'on activo' : 'dim'}`} onClick={toggleShuffle} disabled={sinModos || !track} title="Aleatorio" aria-label="Aleatorio">
+          <button
+            className={`icon-btn ${shuffle ? 'on activo' : 'dim'}`}
+            onClick={toggleShuffle}
+            disabled={sinModos || !track}
+            title="Aleatorio"
+            aria-label="Aleatorio"
+          >
             <ShuffleIcon size={20} />
           </button>
           <button className="icon-btn" onClick={prev} disabled={!track} aria-disabled={siguiendo} title="Anterior" aria-label="Anterior">
             <PrevIcon size={28} />
           </button>
-          <button className="esc-play" onClick={toggle} disabled={!track} aria-disabled={siguiendo} title={playing ? 'Pausar (espacio)' : 'Reproducir (espacio)'} aria-label={playing ? 'Pausar' : 'Reproducir'}>
+          <button
+            className="esc-play"
+            onClick={toggle}
+            disabled={!track}
+            aria-disabled={siguiendo}
+            title={playing ? 'Pausar (espacio)' : 'Reproducir (espacio)'}
+            aria-label={playing ? 'Pausar' : 'Reproducir'}
+          >
             {playing ? <PauseIcon size={26} /> : <PlayIcon size={26} />}
           </button>
           <button className="icon-btn" onClick={next} disabled={!track} aria-disabled={siguiendo} title="Siguiente" aria-label="Siguiente">
@@ -548,23 +645,46 @@ function BarraReproductor({ panel, cambiarPanel }: { panel: Panel; cambiarPanel:
 
       <div className="esc-abajo-der">
         <button
-          className={`icon-btn esc-chico ${panel === 'ahora' ? 'on activo' : 'dim'}`}
-          onClick={() => cambiarPanel(panel === 'ahora' ? null : 'ahora')}
+          className={`icon-btn esc-chico ${letraAbierta ? 'on activo' : 'dim'}`}
+          onClick={() => {
+            usePlayer.getState().setExpanded(false);
+            useLetraUi.getState().alternar();
+          }}
+          disabled={!track}
+          title="Letra (Alt + Shift + L)"
+          aria-label="Letra"
+        >
+          <LetraIcon size={20} />
+        </button>
+        <button
+          className={`icon-btn esc-chico ${activo('ahora') ? 'on activo' : 'dim'}`}
+          onClick={() => cambiarPanel(activo('ahora') ? null : 'ahora')}
           disabled={!track}
           title="Sonando ahora"
           aria-label="Sonando ahora"
         >
           <PanelIcon />
         </button>
-        <button
-          className={`icon-btn esc-chico ${panel === 'fila' ? 'on activo' : 'dim'}`}
-          onClick={() => cambiarPanel(panel === 'fila' ? null : 'fila')}
-          disabled={!track}
-          title="Fila de reproducción"
-          aria-label="Fila de reproducción"
-        >
-          <QueueIcon />
-        </button>
+        {enParty ? (
+          <button
+            className={`icon-btn esc-chico ${partyPanel ? 'on activo' : 'dim'}`}
+            onClick={() => useParty.setState({ panelPc: !partyPanel })}
+            title="Party (Alt + Shift + Q)"
+            aria-label="Party"
+          >
+            <PartyIcon size={20} />
+          </button>
+        ) : (
+          <button
+            className={`icon-btn esc-chico ${activo('fila') ? 'on activo' : 'dim'}`}
+            onClick={() => cambiarPanel(activo('fila') ? null : 'fila')}
+            disabled={!track}
+            title="Fila de reproducción"
+            aria-label="Fila de reproducción"
+          >
+            <QueueIcon />
+          </button>
+        )}
         <Volumen />
       </div>
     </footer>

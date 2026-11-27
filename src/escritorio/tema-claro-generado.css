@@ -1,0 +1,98 @@
+/* ===== Temas claros (Neutro, Algodón): GENERADO por scripts/tema-claro.py a partir de styles.css y escritorio.css. ===== */
+html[data-claro] .marca-beta { background: rgba(255, 111, 181, 0.18); }
+html[data-claro] .chip { background: rgba(255, 111, 181, 0.18); }
+html[data-claro] .cover-empty { color: rgba(28, 20, 24, 0.578); }
+@media (hover: hover) and (pointer: fine) { html[data-claro] .carrusel-flecha { border: 1px solid rgba(255, 111, 181, 0.26); } }
+html[data-claro] .track-row:active,
+html[data-claro] .artist-row:active { background: rgba(255, 111, 181, 0.116); }
+html[data-claro] .icon-btn:active { background: rgba(255, 111, 181, 0.18); }
+html[data-claro] .icon-btn.dim { color: rgba(28, 20, 24, 0.578); }
+html[data-claro] .round-btn { background: rgba(255, 111, 181, 0.18); }
+html[data-claro] .fp-tabs button.active { background: rgba(255, 111, 181, 0.308); }
+html[data-claro] .fp-artist { color: rgba(28, 20, 24, 0.735); }
+html[data-claro] .seek input::-webkit-slider-runnable-track { background: linear-gradient(to right, #fff var(--pct), rgba(255, 111, 181, 0.42) var(--pct)); }
+html[data-claro] .seek input::-moz-range-track { background: rgba(255, 111, 181, 0.42); }
+html[data-claro] .seek-times { color: rgba(28, 20, 24, 0.735); }
+html[data-claro] .sheet-item:active { background: rgba(255, 111, 181, 0.148); }
+html[data-claro] .credit-row { border-bottom: 1px solid rgba(255, 111, 181, 0.116); }
+html[data-claro] .spinner { border: 2px solid rgba(255, 111, 181, 0.34); }
+html[data-claro] .eq-zero { stroke: rgba(28, 20, 24, 0.158); }
+html[data-claro] .settings-row:active { background: rgba(255, 111, 181, 0.116); }
+html[data-claro] .eq-modes { background: rgba(255, 111, 181, 0.148); }
+html[data-claro] .page-dots button { background: rgba(255, 111, 181, 0.58); }
+html[data-claro] .sort-menu button:active { background: rgba(255, 111, 181, 0.148); }
+html[data-claro] .lib-row:active { background: rgba(255, 111, 181, 0.116); }
+html[data-claro] .pl-pick-row:active { background: rgba(255, 111, 181, 0.148); }
+html[data-claro] .lib-card-sub { color: rgba(28, 20, 24, 0.735); }
+html[data-claro] .lib-card-play { background: rgba(255, 111, 181, 0.244); }
+html[data-claro] .foto-mascara { outline: 2px solid rgba(255, 111, 181, 1); }
+html[data-claro] .amigo-row:active { background: rgba(255, 111, 181, 0.1); }
+html[data-claro] .juntos-banner button { background: rgba(255, 111, 181, 0.212); }
+html[data-claro] .proximamente-chip { background: rgba(255, 111, 181, 0.148); color: rgba(28, 20, 24, 0.63); }
+html[data-claro] .volumen-btn { color: rgba(28, 20, 24, 0.735); }
+html[data-claro] .volumen-btn:active { background: rgba(255, 111, 181, 0.18); }
+html[data-claro] .volumen-barra input::-webkit-slider-runnable-track { background: linear-gradient(to right, #fff var(--pct), rgba(255, 111, 181, 0.372) var(--pct)); }
+html[data-claro] .volumen-barra input::-moz-range-track { background: rgba(255, 111, 181, 0.372); }
+html[data-claro] .invitar-btn:active { background: rgba(255, 111, 181, 0.18); }
+html[data-claro] .invitar-btn:active { background: rgba(255, 111, 181, 0.18); }
+html[data-claro] .spinner { border: 3px solid rgba(255, 111, 181, 0.26); }
+html[data-claro] .cola-hoja.abierta { box-shadow: 0 -1px 0 rgba(255, 111, 181, 0.116); }
+html[data-claro] .cola-manija { background: rgba(255, 111, 181, 0.58); }
+html[data-claro] .cola-asoma-titulo { color: rgba(28, 20, 24, 0.788); }
+html[data-claro] .cola-asoma-sig { color: rgba(28, 20, 24, 0.578); }
+html[data-claro] .cola-chip { background: rgba(255, 111, 181, 0.18); }
+html[data-claro] .cola-fila:active { background: rgba(255, 111, 181, 0.1); }
+html[data-claro] .cola-fila.actual { background: linear-gradient(90deg, rgba(255, 111, 181, 0.18), rgba(255, 111, 181, 0.052)); }
+html[data-claro] .cola-mover { color: rgba(28, 20, 24, 0.735); }
+html[data-claro] .gesto-atras { background: radial-gradient(circle at 0 50%, rgba(255, 111, 181, 0.468), rgba(255, 111, 181, 0.148) 70%); }
+html[data-claro] .gesto-atras.listo { background: radial-gradient(circle at 0 50%, rgba(255, 111, 181, 0.9), rgba(255, 111, 181, 0.308) 70%); }
+html[data-claro] .actualizacion-aviso { box-shadow: 0 14px 40px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(255, 111, 181, 0.148); }
+html[data-claro] .actualizacion-texto span { color: rgba(28, 20, 24, 0.735); }
+html[data-claro] .actualizacion-cerrar { color: rgba(28, 20, 24, 0.735); }
+html[data-claro] .bienvenida-web { box-shadow: inset 0 0 0 1px rgba(255, 111, 181, 0.42); }
+html[data-claro] .search-sugerencias { border-bottom: 1px solid rgba(255, 111, 181, 0.148); }
+html[data-claro] .party-banner-ver { background: rgba(255, 111, 181, 0.212); }
+html[data-claro] .reportar textarea { border: 1px solid rgba(255, 111, 181, 0.244); }
+html[data-claro] .perfil-banner-muestra { box-shadow: inset 0 0 0 1px rgba(255, 111, 181, 0.212); }
+html[data-claro] .perfil-cifras { color: rgba(28, 20, 24, 0.892); }
+html[data-claro] .perfil-descripcion { color: rgba(28, 20, 24, 0.903); }
+html[data-claro] .perfil-btn-borde { border: 1px solid rgba(255, 111, 181, 0.9); }
+html[data-claro] .perfil-editar { border: 1px solid rgba(255, 111, 181, 0.148); }
+html[data-claro] .perfil-editar textarea { border: 1px solid rgba(255, 111, 181, 0.244); }
+html[data-claro] .perfil-color { box-shadow: inset 0 0 0 1px rgba(255, 111, 181, 0.308); }
+html[data-claro] .insignia:hover { background: rgba(255, 111, 181, 0.148); }
+html[data-claro] .insignia.activa { background: rgba(255, 111, 181, 0.18); }
+html[data-claro] .insignia-tarjeta { border: 1px solid rgba(255, 111, 181, 0.148); }
+html[data-claro] .insignia-tarjeta-icono { background: radial-gradient(circle, rgba(255, 111, 181, 0.18), transparent 68%); }
+html[data-claro] .amigo-placa .track-sub { color: rgba(28, 20, 24, 0.756); }
+html[data-claro] .sin-conexion h2 { color: rgba(28, 20, 24, 0.892); }
+html[data-claro] .esc-flecha:hover:not(:disabled) { background: rgba(255, 111, 181, 0.148); }
+html[data-claro] .esc-ventana button:hover { background: rgba(255, 111, 181, 0.18); }
+html[data-claro] .esc-chips .chip:hover:not(.active):not(:disabled) { background: rgba(255, 111, 181, 0.308); }
+html[data-claro] .esc-rapida-fila:hover { background: rgba(255, 111, 181, 0.132); }
+html[data-claro] .esc-carrusel .card:hover { background: rgba(255, 111, 181, 0.116); }
+html[data-claro] .esc-pl-datos { color: rgba(28, 20, 24, 0.892); }
+html[data-claro] .esc-tabla-fila:hover { background: rgba(255, 111, 181, 0.132); }
+html[data-claro] .esc-tabla-fila.elegida { background: rgba(255, 111, 181, 0.244); }
+html[data-claro] .esc-ahora-sig { background: rgba(255, 111, 181, 0.116); }
+html[data-claro] .esc-ahora-sig-fila:hover { background: rgba(255, 111, 181, 0.132); }
+html[data-claro] .esc-fila .track-row:hover { background: rgba(255, 111, 181, 0.132); }
+html[data-claro] .esc-raiz .sheet-item:hover { background: rgba(255, 111, 181, 0.132); }
+html[data-claro] .esc-raiz .track-row:hover { background: rgba(255, 111, 181, 0.116); }
+html[data-claro] .esc-vista-sub { color: rgba(28, 20, 24, 0.756); }
+html[data-claro] .esc-vista-pestanas { border-bottom: 1px solid rgba(255, 111, 181, 0.18); }
+html[data-claro] .esc-vista-cola .track-row:hover { background: rgba(255, 111, 181, 0.132); }
+html[data-claro] .esc-desplegable .track-row:hover,
+html[data-claro] .esc-desplegable .search-history-row:hover,
+html[data-claro] .esc-desplegable .artist-row:hover { background: rgba(255, 111, 181, 0.132); }
+html[data-claro] .sheet-backdrop.ctx .sheet { box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 111, 181, 0.084); }
+html[data-claro] .ctx-panel { box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 111, 181, 0.084); }
+html[data-claro] .esc-raiz .settings-eq { background: rgba(255, 111, 181, 0.084); }
+html[data-claro] .ajuste-lista select:hover { border-color: rgba(255, 111, 181, 0.42); }
+html[data-claro] .tema-puntos i { box-shadow: 0 0 0 1px rgba(255, 111, 181, 0.308); }
+html[data-claro] .esc-raiz .track-row.elegida,
+html[data-claro] .esc-raiz .track-row.elegida:hover { background: rgba(255, 111, 181, 0.244); }
+html[data-claro] .esc-rapida-fila.elegida,
+html[data-claro] .esc-rapida-fila.elegida:hover { background: rgba(255, 111, 181, 0.276); box-shadow: inset 0 0 0 1px rgba(255, 111, 181, 0.308); }
+html[data-claro] .esc-raiz .lib-card-row.elegida { background: rgba(255, 111, 181, 0.276); }
+html[data-claro] .esc-atajo { border-bottom: 1px solid rgba(255, 111, 181, 0.1); }

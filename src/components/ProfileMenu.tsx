@@ -6,7 +6,7 @@ import { FotoPerfil } from './FotoPerfil';
 import { showSnack } from './PlaylistSheets';
 import { useSocial } from '../server/social';
 import { abrirCuenta } from './CuentaScreen';
-import { HistoryIcon, NoteIcon, PersonAddIcon, LogoutIcon, PersonIcon, SettingsIcon, EditIcon } from './Icons';
+import { HistoryIcon, NoteIcon, PersonAddIcon, LogoutIcon, PersonIcon, SettingsIcon } from './Icons';
 import { useExit } from './useExit';
 import { escritorioActivo } from '../escritorio/activo';
 import { abrirAyuda } from '../escritorio/atajos';
@@ -23,7 +23,7 @@ function abrirMenu() {
   void refrescarYo(); // por si cambió la foto en otro aparato
 }
 
-/** Abre "Foto de perfil" (desde mi perfil). */
+/** Abre "Foto de perfil" (desde mi perfil: tocar la foto o Editar perfil → Foto). Ya no está en el menú. */
 export function abrirFotoPerfil() {
   useMenuPerfil.setState({ open: true, vista: 'foto' });
   openOverlay(() => useMenuPerfil.setState({ open: false }));
@@ -117,11 +117,6 @@ export function ProfileMenu() {
               <span className="esc-perfil-item"><PersonIcon size={20} /> Perfil</span>
             </button>
           )}
-          {conectado && (
-            <button role="menuitem" onClick={() => useMenuPerfil.setState({ vista: 'foto' })}>
-              <span className="esc-perfil-item"><EditIcon size={20} /> Foto de perfil</span>
-            </button>
-          )}
           <button role="menuitem" onClick={ir({ type: 'history' })}>
             <span className="esc-perfil-item"><HistoryIcon size={20} /> Historial</span>
           </button>
@@ -174,11 +169,6 @@ export function ProfileMenu() {
         {conectado && (
           <button className="sheet-item" onClick={() => closeAllOverlaysThen(() => useNav.getState().push({ type: 'usuario', id: 0 }))}>
             <PersonIcon /> Tu perfil
-          </button>
-        )}
-        {conectado && (
-          <button className="sheet-item" onClick={() => useMenuPerfil.setState({ vista: 'foto' })}>
-            <EditIcon /> Foto de perfil
           </button>
         )}
         <button className="sheet-item" onClick={() => closeAllOverlaysThen(() => useNav.getState().push({ type: 'history' }))}>

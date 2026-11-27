@@ -17,10 +17,12 @@ const run = promisify(execFile);
 const fotos = () => join(process.env.MUSIC_DIR, '..', 'fotos');
 const fotosPlaylists = () => join(process.env.MUSIC_DIR, '..', 'fotos-playlists');
 const banners = () => join(process.env.MUSIC_DIR, '..', 'banners');
-/** Banner del perfil: foto JPG de 1500×500 o GIF animado de 960×320 (máx. 8 s), recortado al centro. */
+/** Banner del perfil: foto JPG de 1500×500 o GIF animado de hasta 960×320 (máx. 8 s), recortado al centro. */
 const MAX_SALIDA_BANNER = 4 * 1024 * 1024;
 const MAX_BYTES = 5 * 1024 * 1024;
 const MAX_GIF = 8 * 1024 * 1024;
+/** GIF del banner: entra grande (se recorta a 8 s y 960×320, así que lo guardado pesa mucho menos). */
+const MAX_GIF_BANNER = 15 * 1024 * 1024;
 const MAX_SALIDA_GIF = 3 * 1024 * 1024;
 const NOMBRE = /^[a-f0-9]{24}\.(jpg|gif)$/;
 const NOMBRE_PL = /^[a-f0-9]{24}\.jpg$/;
@@ -94,21 +96,29 @@ async function aGifCuadrado(datos, dir, recorte) {
   }
 }
 
-/** Banner (3:1, recortado al centro), sin metadatos: JPG de 1500×500 o GIF animado de 960×320. */
+/**
+ * Banner (3:1, recortado al centro), sin metadatos: JPG de 1500×500 o GIF animado de hasta 960×320.
+ * El GIF no se agranda: uno chico queda en su tamaño (agrandarlo lo hacía pesar 3 veces más y tardar un minuto).
+ */
 async function aBanner(datos, gif) {
   const dir = banners();
   await mkdir(dir, { recursive: true });
   const tmp = join(dir, `.tmp-${randomBytes(6).toString('hex')}`);
   const salida = `${tmp}.${gif ? 'gif' : 'jpg'}`;
-  const [w, h] = gif ? [960, 320] : [1500, 500];
-  const encuadre = `scale=${w}:${h}:force_original_aspect_ratio=increase:flags=lanczos,crop=${w}:${h}`;
+  const encuadre = gif
+    ? `crop=w='min(iw,ih*3)':h='min(iw,ih*3)/3',scale=w='min(960,iw)':h=-1:flags=lanczos`
+    : `scale=1500:500:force_original_aspect_ratio=increase:flags=lanczos,crop=1500:500`;
   try {
     await writeFile(tmp, datos);
-    const args = gif
-      ? ['-v', 'error', '-y', '-i', tmp, '-t', '8', '-filter_complex', `[0:v]${encuadre},fps=12,split[a][b];[a]palettegen=max_colors=128[p];[b][p]paletteuse=dither=bayer:bayer_scale=4`, '-loop', '0', '-map_metadata', '-1', salida]
-      : ['-v', 'error', '-y', '-i', tmp, '-frames:v', '1', '-vf', encuadre, '-map_metadata', '-1', '-q:v', '3', salida];
-    await run('ffmpeg', args, { timeout: gif ? 90_000 : 20_000 });
-    const out = await readFile(salida);
+    const gifCon = (fps, colores) => ['-v', 'error', '-y', '-i', tmp, '-t', '8', '-filter_complex', `[0:v]${encuadre},fps=${fps},split[a][b];[a]palettegen=max_colors=${colores}[p];[b][p]paletteuse=dither=bayer:bayer_scale=4`, '-loop', '0', '-map_metadata', '-1', salida];
+    const args = gif ? gifCon(12, 128) : ['-v', 'error', '-y', '-i', tmp, '-frames:v', '1', '-vf', encuadre, '-map_metadata', '-1', '-q:v', '3', salida];
+    await run('ffmpeg', args, { timeout: gif ? 45_000 : 20_000 }); // Cloudflare corta a los 100 s: los 2 intentos caben
+    let out = await readFile(salida);
+    // Un GIF con mucho movimiento puede quedar pesado: se reintenta una vez con menos cuadros y colores.
+    if (gif && out.length > MAX_SALIDA_BANNER) {
+      await run('ffmpeg', gifCon(10, 64), { timeout: 45_000 });
+      out = await readFile(salida);
+    }
     if (out.length > MAX_SALIDA_BANNER) throw Object.assign(new Error('pesado'), { pesado: true });
     const archivo = `${createHash('sha256').update(out).digest('hex').slice(0, 24)}.${gif ? 'gif' : 'jpg'}`;
     await rename(salida, join(dir, archivo));
@@ -191,11 +201,12 @@ export function rutasFoto(app) {
   // ---------------- Banner del perfil ----------------
 
   /** Subir (o cambiar) mi banner: { imagen: "<base64>" } (JPG, PNG, WebP o GIF animado). */
-  app.post('/api/banner', { preHandler: requiereUsuario, bodyLimit: 12 * 1024 * 1024 }, async (req, reply) => {
+  // 15 MB en base64 son unos 20 MB.
+  app.post('/api/banner', { preHandler: requiereUsuario, bodyLimit: 22 * 1024 * 1024 }, async (req, reply) => {
     const datos = decodificar(req.body?.imagen);
     const gif = esGif(datos);
-    if (!datos.length || datos.length > (gif ? MAX_GIF : MAX_BYTES)) {
-      return reply.code(400).send({ error: gif ? 'El GIF tiene que pesar menos de 8 MB' : 'La imagen tiene que pesar menos de 5 MB' });
+    if (!datos.length || datos.length > (gif ? MAX_GIF_BANNER : MAX_BYTES)) {
+      return reply.code(400).send({ error: gif ? 'El GIF tiene que pesar menos de 15 MB' : 'La imagen tiene que pesar menos de 5 MB' });
     }
     if (!gif && !esImagen(datos)) return reply.code(400).send({ error: 'Ese archivo no es una imagen (JPG, PNG, WebP o GIF)' });
     let archivo;

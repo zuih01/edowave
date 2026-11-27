@@ -1,6 +1,6 @@
 import { root } from './env.js'; // primero: la configuración
 import { createHash } from 'node:crypto';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, watchFile } from 'node:fs';
 import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import Fastify from 'fastify';
@@ -9,17 +9,21 @@ import archivos from '@fastify/static';
 import { iniciarCola } from './analisis/cola.js';
 import { iniciarVibra } from './analisis/vibra.js';
 import { iniciarLastfm } from './datos/lastfm.js';
+import { iniciarLetras } from './datos/letras.js';
+import rutasLetras from './rutas/letras.js';
+import { iniciarYtmusic } from './datos/ytmusic.js';
 import { iniciarAnioOriginal } from './datos/anioOriginal.js';
 import admin from './rutas/admin.js';
 import cuentas from './rutas/cuentas.js';
 import musica from './rutas/musica.js';
-import social from './rutas/social.js';
+import social, { enviarATodos } from './rutas/social.js';
 import party from './rutas/party.js';
 import datos from './rutas/datos.js';
 import estadisticas from './rutas/estadisticas.js';
 import apiPublica from './rutas/apiPublica.js';
 import rutasCategorias from './rutas/categorias.js';
 import rutasArtistas from './rutas/artistas.js';
+import rutasBot from './rutas/bot.js';
 import { iniciarCategorias } from './categorias.js';
 import { iniciarFaltantes } from './importarPlaylist.js';
 import { iniciarPaises } from './pais.js';
@@ -135,6 +139,8 @@ await app.register(estadisticas);
 await app.register(apiPublica);
 await app.register(rutasCategorias);
 await app.register(rutasArtistas);
+await app.register(rutasBot);
+await app.register(rutasLetras);
 void iniciarPaises(app.log); // país de cada escucha (sin guardar la IP)
 void iniciarEntrada(app.log); // ~/reproductor/entrada: lo que se deja ahí se agrega solo
 
@@ -198,6 +204,16 @@ await app.register(archivos, {
     }
   },
 });
+// Versión nueva publicada (los scripts suben version.json al final): se avisa al tiro a todas las apps abiertas,
+// que revisan y muestran "Hay una versión nueva" sin esperar. Se mira el archivo cada 5 s (sirve aunque llegue por scp).
+for (const [plataforma, carpeta] of [
+  ['pc', pc],
+  ['android', android],
+]) {
+  watchFile(join(carpeta, 'version.json'), { interval: 5000 }, (ahora, antes) => {
+    if (ahora.mtimeMs && ahora.mtimeMs !== antes.mtimeMs) setTimeout(() => enviarATodos({ tipo: 'version-nueva', plataforma }), 2000);
+  });
+}
 app.get('/download-beta', async (_req, reply) => {
   let v = null;
   try {
@@ -242,6 +258,8 @@ await migrate(join(root, 'migraciones'));
 iniciarCola(app.log);
 iniciarVibra(app.log); // vibe de cada canción (Essentia)
 iniciarLastfm(app.log); // etiquetas de Last.fm
+iniciarLetras(app.log); // letras de LRCLIB
+iniciarYtmusic(app.log); // recomendaciones de YouTube Music (radio y "Relacionado" de cada canción)
 iniciarAnioOriginal(app.log); // año original de cada canción (MusicBrainz)
 iniciarCategorias(app.log); // sugerencias de meme / anime / OST de videojuego para el panel
 iniciarFaltantes(app.log); // canciones que faltaban en playlists importadas de Spotify

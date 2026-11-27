@@ -64,6 +64,53 @@ audio.preload = 'auto';
 // procesarlo (sin esto, el navegador lo dejaría en silencio al pasarlo por el circuito de audio).
 if (import.meta.env.VITE_SERVIDOR) audio.crossOrigin = 'anonymous';
 
+/**
+ * Diagnóstico (26-11-2026): a veces la canción vuelve al inicio a los ~4 s. Se anota en el registro técnico todo
+ * retroceso de más de 1 s: si lo pidió el código (con quién lo pidió) o si lo hizo el navegador solo.
+ */
+const origenSrc = () => (audio.currentSrc.startsWith('blob:') ? 'blob' : audio.currentSrc.includes('/audio?') ? 'stream' : 'otro');
+const quienLlama = () =>
+  (new Error().stack ?? '')
+    .split('\n')
+    .slice(3, 7)
+    .map((l) => l.trim().replace(/^at /, '').replace(/https?:\/\/[^/]+/, ''))
+    .join(' < ');
+let saltoPedido = false;
+{
+  const desc = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'currentTime');
+  if (desc?.get && desc.set) {
+    const get = desc.get;
+    const setT = desc.set;
+    Object.defineProperty(audio, 'currentTime', {
+      configurable: true,
+      get() {
+        return get.call(audio);
+      },
+      set(v: number) {
+        const antes = get.call(audio) as number;
+        if (v < antes - 1) {
+          saltoPedido = true;
+          diag('reproductor: retroceso pedido', { de: antes, a: v, src: origenSrc(), quien: quienLlama() });
+        }
+        setT.call(audio, v);
+      },
+    });
+  }
+}
+let ultimoVisto = 0;
+audio.addEventListener('timeupdate', () => {
+  const t = audio.currentTime;
+  if (t < ultimoVisto - 1 && !saltoPedido)
+    diag('reproductor: retroceso del navegador', { de: ultimoVisto, a: t, src: origenSrc(), listo: audio.readyState, red: audio.networkState });
+  saltoPedido = false;
+  ultimoVisto = t;
+});
+for (const ev of ['loadstart', 'emptied', 'abort', 'stalled', 'error'] as const)
+  audio.addEventListener(ev, () => {
+    if (ultimoVisto > 1 || ev === 'error') diag(`reproductor: evento ${ev}`, { pos: ultimoVisto, src: origenSrc(), err: audio.error?.code ?? '' });
+    if (ev === 'loadstart' || ev === 'emptied') ultimoVisto = 0;
+  });
+
 // Solo en desarrollo: si este archivo se recarga en caliente, el reproductor viejo se calla (si no, seguiría
 // sonando "huérfano" la canción anterior y el nuevo no podría pararlo). En la app instalada no existe.
 if (import.meta.hot) {
@@ -564,6 +611,14 @@ export const partyHooks: {
   sinModos?: () => boolean;
 } = {};
 const party = (accion: AccionParty, tracks?: Track[], inicio?: number) => !!partyHooks.control?.(accion, tracks, inicio);
+
+/** ¿Ya se recuperó la cola de la sesión anterior? (al recargar la página) */
+export const colaRecuperada = () => restored;
+
+/** Pone a sonar la canción `index` de la cola actual en un punto exacto, sin cambiar la cola (Party: retomar). */
+export function playIndexAt(index: number, at: number, play: boolean) {
+  return load(index, play, at);
+}
 
 /** Pone a sonar una canción en un punto exacto (lo usa "Escuchar juntos"). */
 export function playIdAt(id: string, at: number, play: boolean) {

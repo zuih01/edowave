@@ -46,6 +46,7 @@
         <button role="tab" data-tab="sugerencias">Sugerencias <span class="contador-tab" id="sug-contador" hidden></span></button>
         <button role="tab" data-tab="categorias">Categorías <span class="contador-tab" id="cat-contador" hidden></span></button>
         <button role="tab" data-tab="artistas">Artistas <span class="contador-tab" id="art-contador" hidden></span></button>
+        <button role="tab" data-tab="bot">Bot <span class="contador-tab" id="bot-alerta" hidden>!</span></button>
       </nav>
       <div class="cuenta">
         <span id="yo"></span>
@@ -55,6 +56,12 @@
         <button class="link" id="salir">Salir</button>
       </div>
     </header>
+
+    <!-- Aviso en todas las pestañas si el bot de descargas tiene problemas (p. ej. sin conexión con YouTube) -->
+    <div class="bot-banner" id="bot-banner" role="alert" hidden>
+      <span class="bot-banner-txt" id="bot-banner-txt"></span>
+      <button class="link" id="bot-banner-ver">Ver el bot</button>
+    </div>
 
     <main>
       <!-- Música -->
@@ -181,6 +188,15 @@
         <p class="info cat-ayuda">Nombres que solo cambian en tildes o mayúsculas. <b>Unificar</b> los deja todos con el nombre elegido.</p>
         <p class="vacio" id="art-nombres-vacio" hidden>No hay nombres por unificar.</p>
         <ul class="tarjetas" id="art-nombres"></ul>
+      </div>
+
+      <!-- Bot: el bot de descargas (Billboard Sync) y su conexión con YouTube -->
+      <div data-panel="bot" hidden>
+        <div class="est-cab">
+          <h2>Bot de descargas</h2>
+          <button class="link" id="bot-recargar">Actualizar</button>
+        </div>
+        <div id="bot-cuerpo"><p class="vacio">Cargando…</p></div>
       </div>
     </main>
   </section>

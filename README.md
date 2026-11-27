@@ -2,6 +2,16 @@
 
 Reproductor de música propio, con biblioteca compartida en un servidor y recomendaciones personales por cuenta.
 
+*An open source music player for web, Android and Windows, with a shared library on a self-hosted server and per-account recommendations.*
+
+## Descargar
+
+- **Windows 10 y 11:** [musica.empanados.io/download-beta](https://musica.empanados.io/download-beta) o [Releases](https://github.com/zuih01/edowave/releases).
+- **Web y iPhone (PWA):** [musica.empanados.io](https://musica.empanados.io).
+- Se necesita una cuenta en el servidor (por invitación).
+
+Free code signing provided by [SignPath.io](https://about.signpath.io/), certificate by [SignPath Foundation](https://signpath.org/). Ver la [Code signing policy](CODE_SIGNING.md) y la [política de privacidad](PRIVACY.md).
+
 ## Partes
 
 | Carpeta | Qué es |
@@ -29,6 +39,16 @@ npm run dev
 ```
 
 El servidor está en `servidor/` (`npm install` y configurar un `.env` propio con la base de datos y las claves). Ningún secreto va en este repositorio.
+
+### App de Windows
+
+Se compila en GitHub Actions ([`.github/workflows/pc.yml`](.github/workflows/pc.yml)) a partir de una etiqueta `v*`: interfaz con Vite y app con Tauri 2 (Rust), instalador NSIS. Para compilarla a mano:
+
+```sh
+npm ci
+VITE_SERVIDOR=https://musica.empanados.io VITE_PLATAFORMA=pc npx vite build --outDir dist-pc --emptyOutDir
+cd escritorio-pc/app && npx tauri build --bundles nsis
+```
 
 ## Licencia
 

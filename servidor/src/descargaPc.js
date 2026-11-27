@@ -65,6 +65,9 @@ export function paginaDescargaPc(v, android) {
   .datos { margin: -8px 0 0; font-size: 13px; color: rgba(255, 255, 255, 0.55); }
   .aviso { margin-top: 8px; padding: 14px 16px; border-radius: 12px; background: rgba(0, 0, 0, 0.25); font-size: 13px; line-height: 1.6; color: rgba(255, 255, 255, 0.7); text-align: left; }
   .aviso b { color: #fff; font-weight: 600; }
+  .pie { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 16px; font-size: 12.5px; color: rgba(255, 255, 255, 0.5); }
+  .pie a { color: rgba(255, 255, 255, 0.72); text-decoration: none; }
+  .pie a:hover { color: #fff; text-decoration: underline; }
 </style>
 </head>
 <body>
@@ -77,6 +80,11 @@ export function paginaDescargaPc(v, android) {
       Es una versión de prueba y puede tener errores.<br />
       Si al abrir el instalador Windows dice <b>“Windows protegió su PC”</b>, toca <b>Más información</b> y luego <b>Ejecutar de todas formas</b>.
     </div>
+    <nav class="pie" aria-label="Más información">
+      <a href="https://github.com/zuih01/edowave" rel="noopener">Código abierto (GitHub, MIT)</a>
+      <a href="https://github.com/zuih01/edowave/blob/main/CODE_SIGNING.md" rel="noopener">Code signing policy</a>
+      <a href="https://github.com/zuih01/edowave/blob/main/PRIVACY.md" rel="noopener">Privacidad</a>
+    </nav>
   </main>
 </body>
 </html>`;

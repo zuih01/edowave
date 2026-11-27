@@ -1,0 +1,112 @@
+/* Temas claros (Neutro y Algodón, <html data-claro>): ajustes a mano. Va después de tema-claro-generado.css
+   (ver temas.ts). Si cambian los blancos de styles.css o escritorio.css, regenerar ese archivo:
+   python scripts/tema-claro.py src/styles.css src/escritorio/escritorio.css > src/escritorio/tema-claro-generado.css */
+
+/* Botones principales en negro, como en la referencia */
+html[data-claro] .esc-play,
+html[data-claro] .esc-pl-play,
+html[data-claro] .esc-res-play,
+html[data-claro] .lista-busq-play,
+html[data-claro] .play-big { background: #1c1418; color: #fff; }
+html[data-claro] .chip.active,
+html[data-claro] .esc-chips .chip.active { background: #1c1418; color: #fff; }
+html[data-claro] .esc-chips .chip:not(.active),
+html[data-claro] .esc-res-chip:not(.on),
+html[data-claro] .app:not(.esc-raiz) .chip:not(.active) { background: var(--surface); color: var(--text); }
+html[data-claro] .esc-chips .chip:hover:not(.active):not(:disabled) { background: var(--surface-2); }
+html[data-claro] .actualizacion-btn,
+html[data-claro] .party-agregar,
+html[data-claro] .party-compartir { background: #1c1418; color: #fff; }
+/* Barras: lo avanzado en rosado */
+html[data-claro] .esc-rango::-webkit-slider-runnable-track,
+html[data-claro] .esc-rango:hover::-webkit-slider-runnable-track { background: linear-gradient(90deg, var(--accent) var(--pct), var(--t-pista) var(--pct)); }
+html[data-claro] .esc-rango::-moz-range-track,
+html[data-claro] .esc-rango:hover::-moz-range-track { background: linear-gradient(90deg, var(--accent) var(--pct), var(--t-pista) var(--pct)); }
+html[data-claro] .app:not(.esc-raiz) .progress div { background: var(--accent); }
+/* Filas y tarjetas: rosa pastel */
+html[data-claro] .esc-rapida-fila { background: var(--surface); }
+html[data-claro] .esc-rapida-fila:hover { background: var(--surface-2); }
+
+/* Barra de avance del teléfono: lo avanzado en rosado (era blanco) */
+html[data-claro] .seek input::-webkit-slider-runnable-track { background: linear-gradient(to right, var(--accent) var(--pct), var(--t-pista) var(--pct)); }
+html[data-claro] .seek input::-moz-range-track { background: var(--t-pista); }
+/* Títulos encima de una carátula (accesos directos del teléfono): siguen en blanco */
+html[data-claro] .shortcut span { color: #fff; }
+/* Tarjetas grandes del inicio del teléfono: rosa pastel en vez del color de la carátula (con texto oscuro
+   el tinte oscuro se veía turbio). El play va negro, como en la referencia. */
+html[data-claro] .lib-card { background: var(--surface) !important; }
+html[data-claro] .lib-card-play { background: #1c1418; color: #fff; }
+html[data-claro] .page-dots button.on { background: #1c1418; }
+/* Menús de PC (perfil, clic derecho y submenús): su texto era gris claro fijo (#e8e8e8) y blanco al pasar el mouse */
+html[data-claro] .esc-perfil-menu > button,
+html[data-claro] .esc-perfil-menu > button:hover,
+html[data-claro] .sheet-backdrop.ctx .sheet-item,
+html[data-claro] .sheet-backdrop.ctx .sheet-item:hover:not(:disabled),
+html[data-claro] .sheet-backdrop.ctx .sheet-item.on,
+html[data-claro] .ctx-op,
+html[data-claro] .ctx-op:hover,
+html[data-claro] .sin-conexion-link,
+html[data-claro] .volumen-btn:active { color: var(--text); }
+/* Ecualizador de bandas: la pestaña elegida queda negra con letra blanca (el Pultec no cambia) */
+html[data-claro] .eq-modes button.active { color: #fff; }
+/* Botones que en oscuro son blancos con letra negra: en claro quedan negros, así que la letra va blanca */
+html[data-claro] .chip.active,
+html[data-claro] .pill.primary,
+html[data-claro] .round-btn.on,
+html[data-claro] .eq-modes button.active,
+html[data-claro] .cuenta-btn,
+html[data-claro] .esc-mas.abierto,
+html[data-claro] .esc-play,
+html[data-claro] .esc-grande-play,
+html[data-claro] .esc-res-chip.on,
+html[data-claro] .esc-actualizar-btn { color: #fff; }
+/* Reproductor abierto del teléfono: en vez de la carátula oscurecida, el color del tema (pisa el estilo en línea) */
+html[data-claro] .full-player { background: var(--t-app) !important; --fondo: var(--t-app) !important; }
+html[data-claro] .full-player .fp-cover.cover { box-shadow: 0 16px 40px rgba(120, 40, 80, 0.25); }
+/* Volumen del teléfono (no sale en iPhone): lo avanzado en rosado y la perilla negra */
+html[data-claro] .volumen-barra input::-webkit-slider-runnable-track { background: linear-gradient(to right, var(--accent) var(--pct), var(--t-pista) var(--pct)); }
+html[data-claro] .volumen-barra input::-moz-range-track { background: var(--t-pista); }
+html[data-claro] .volumen-barra input::-moz-range-progress { background: var(--accent); }
+html[data-claro] .volumen-barra input::-webkit-slider-thumb { background: #1c1418; }
+html[data-claro] .volumen-barra input::-moz-range-thumb { background: #1c1418; }
+
+/* Perfiles: en los temas claros se ven como en los oscuros, con el degradado de su color hacia oscuro
+   (si no, el color se mezclaba con el rosado y los textos quedaban borrosos). Dentro de .perfil vuelven los
+   colores del tema clásico y se deshacen las reglas claras que lo tocan. */
+html[data-claro] .perfil {
+  color-scheme: dark;
+  --bg: #030303;
+  --surface: #1d1d1d;
+  --surface-2: #2a2a2a;
+  --text: #ffffff;
+  --text-2: #aaaaaa;
+  --t-panel: #121212;
+  --t-borde: #333333;
+  --t-pista: #4d4d4d;
+  color: var(--text);
+}
+html[data-claro] .perfil .perfil-cifras { color: rgba(255, 255, 255, 0.85); }
+html[data-claro] .perfil .perfil-descripcion { color: rgba(255, 255, 255, 0.86); }
+html[data-claro] .perfil .perfil-btn-borde { border: 1px solid rgba(255, 255, 255, 0.55); color: #fff; }
+html[data-claro] .perfil .perfil-btn-borde:hover { border-color: #fff; }
+html[data-claro] .perfil .pill.primary { background: #fff; color: #000; border-color: #fff; }
+html[data-claro] .perfil .perfil-editar,
+html[data-claro] .perfil .perfil-editar textarea { border-color: rgba(255, 255, 255, 0.14); }
+html[data-claro] .perfil .perfil-color { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18); }
+html[data-claro] .perfil .insignia:hover,
+html[data-claro] .perfil .insignia.activa { background: rgba(255, 255, 255, 0.1); }
+html[data-claro] .perfil .insignia-tarjeta { border-color: rgba(255, 255, 255, 0.1); }
+html[data-claro] .perfil .icon-btn.dim { color: rgba(255, 255, 255, 0.6); }
+html[data-claro] .perfil .chip { background: rgba(255, 255, 255, 0.1); }
+html[data-claro] .perfil .track-row:active,
+html[data-claro] .perfil .track-row:hover,
+html[data-claro] .perfil .amigo-row:active,
+html[data-claro] .perfil .esc-carrusel .card:hover { background: rgba(255, 255, 255, 0.07); }
+html[data-claro] .perfil .lib-card-sub,
+html[data-claro] .perfil .amigo-placa .track-sub { color: rgba(255, 255, 255, 0.72); }
+html[data-claro] .perfil .spinner { border-color: rgba(255, 255, 255, 0.26); }
+
+/* Placas de la lista de amigos: el nombre va en un tono oscuro de su color y sin brillo (claro y con brillo
+   quedaba borroso sobre el rosado). Dentro de un perfil (fondo oscuro) siguen como en los temas oscuros. */
+html[data-claro] .amigo-placa .amigo-nombre-txt { color: color-mix(in srgb, var(--perfil) 62%, #000); text-shadow: none; }
+html[data-claro] .perfil .amigo-placa .amigo-nombre-txt { color: color-mix(in srgb, var(--perfil) 40%, #fff); text-shadow: 0 0 12px color-mix(in srgb, var(--perfil) 60%, transparent); }

@@ -101,6 +101,64 @@ html[data-tema='warmsand'] {
 }
 html[data-tema='warmsand'] body { color: var(--text); }
 
+/* ---------- Neutro: tema CLARO. Blanco, tarjetas rosa pastel, texto y botones principales en negro.
+   Sin degradados. (Es el primer Algodón, guardado tal cual el 24-11.) ---------- */
+html[data-tema='neutro'] {
+  color-scheme: light;
+  --bg: #fbeef4;
+  --surface: #ffe1ee;
+  --surface-2: #ffd0e4;
+  --text: #1c1418;
+  --text-2: #8a6f7c;
+  --accent: #ff6fb5;
+  --t-sobre-acento: #ffffff;
+  --t-panel: #ffffff;
+  --t-contorno: #f6dbe7;
+  --t-menu: #ffffff;
+  --t-menu-hover: #ffe1ee;
+  --t-borde: #f3d3e1;
+  --t-control: #fff3f8;
+  --t-barra: #f2b6d0;
+  --t-pista: #f6d3e2;
+  --t-tono: 255 111 181;
+  --t-inicio: var(--t-panel);
+  --t-vista-a: #fff3f8;
+  --t-vista-b: #fbeef4;
+  --t-cuenta: var(--bg);
+  --t-flotante: #ffffff;
+  --t-app: #ffffff;
+}
+html[data-tema='neutro'] body { color: var(--text); }
+
+/* ---------- Algodón: tema CLARO con fondo rosita. Tarjetas de un rosa un poco más fuerte, texto y botones
+   principales en negro. Sin degradados. ---------- */
+html[data-tema='algodon'] {
+  color-scheme: light;
+  --bg: #ffdfeb;
+  --surface: #ffd0e2;
+  --surface-2: #ffbfd7;
+  --text: #1c1418;
+  --text-2: #8a6476;
+  --accent: #ff5fa8;
+  --t-sobre-acento: #ffffff;
+  --t-panel: #ffe8f0;
+  --t-contorno: #ffd3e3;
+  --t-menu: #fff3f8;
+  --t-menu-hover: #ffd9e8;
+  --t-borde: #f7c3d8;
+  --t-control: #fff3f8;
+  --t-barra: #f2a8c8;
+  --t-pista: #f8c6dc;
+  --t-tono: 255 95 168;
+  --t-inicio: var(--t-panel);
+  --t-vista-a: #ffe8f0;
+  --t-vista-b: #ffdfeb;
+  --t-cuenta: var(--bg);
+  --t-flotante: #fff3f8;
+  --t-app: #ffe8f0;
+}
+html[data-tema='algodon'] body { color: var(--text); }
+
 /* ================= Reglas comunes a todos los temas ================= */
 
 html[data-tema] body,
@@ -334,3 +392,152 @@ html[data-tema='aero'] .app:not(.esc-raiz) .bottom-nav { background: var(--t-bri
 html[data-tema='aero'] .app:not(.esc-raiz) .mini-player { background: var(--t-brillo); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 0 0 1px #000; }
 /* El rack y el ecualizador no llevan cristal */
 html[data-tema='aero'] .eq-body .switch.on { background: var(--accent); box-shadow: none; }
+
+/* ---------- Aero en la app de PC: vidrio de verdad (estilo Aero Glass de Windows 7) ----------
+   Con <html data-vidrio> (solo app de PC + tema Aero) la ventana usa el Acrylic de Windows y se ve el escritorio
+   desenfocado detrás. Reglas de Aero (valores adaptados de 7.css, recreación de Windows 7):
+   - El vidrio va en el marco: barra de arriba, barra lateral, panel derecho y reproductor. El contenido central va
+     casi opaco, para que se lea.
+   - Cada vidrio: borde oscuro por fuera, línea blanca fina por dentro y un brillo que cae en diagonal desde arriba.
+   - Texto sobre vidrio con un halo oscuro suave (Aero usaba un halo para leer sobre cualquier fondo).
+   - Botones brillantes partidos a la mitad; al pasar el mouse, brillo celeste (#5dc4f0). Cerrar en rojo.
+   - Filas elegidas o bajo el mouse: celeste translúcido con borde (#aaddfa), como las listas de Windows 7. */
+html[data-tema='aero'][data-vidrio] {
+  --bg: transparent;
+  --text-2: #c9d6e6;
+  --surface: rgba(255, 255, 255, 0.08);
+  --surface-2: rgba(255, 255, 255, 0.14);
+  --t-panel: rgba(10, 13, 19, 0.86);
+  --t-control: rgba(255, 255, 255, 0.08);
+  --t-borde: rgba(255, 255, 255, 0.18);
+  --t-pista: rgba(255, 255, 255, 0.22);
+  --t-barra: rgba(255, 255, 255, 0.3);
+  --t-inicio: linear-gradient(180deg, rgba(69, 128, 196, 0.22) 0, transparent 320px);
+  --t-vista-a: rgba(10, 14, 22, 0.55);
+  --t-vista-b: rgba(10, 14, 22, 0.4);
+  --t-cuenta: radial-gradient(70% 60% at 50% 0%, rgba(69, 128, 196, 0.3) 0%, transparent 70%);
+  /* vidrio del marco: brillo diagonal + mitad de arriba más clara + tinte azul Aero (#4580c4) */
+  --t-vidrio:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.16) 0, transparent 160px),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0, rgba(255, 255, 255, 0.03) 48%, transparent 50%),
+    rgba(69, 128, 196, 0.14);
+  --t-borde-vidrio: 0 0 0 1px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  --t-boton: linear-gradient(180deg, rgba(255, 255, 255, 0.2) 0, rgba(255, 255, 255, 0.08) 48%, rgba(0, 0, 0, 0.14) 50%, rgba(255, 255, 255, 0.06) 100%);
+  --t-boton-hover: radial-gradient(circle at 50% 100%, rgba(42, 206, 218, 0.55), transparent 65%), linear-gradient(180deg, rgba(182, 217, 238, 0.35) 0, rgba(182, 217, 238, 0.18) 50%, rgba(26, 108, 161, 0.35) 50%);
+  --t-fila-hover: linear-gradient(180deg, rgba(170, 221, 250, 0.16), rgba(120, 180, 240, 0.08));
+  --t-fila-elegida: linear-gradient(180deg, rgba(170, 221, 250, 0.3), rgba(120, 180, 240, 0.16));
+  background: transparent;
+}
+html[data-tema='aero'][data-vidrio] body,
+html[data-tema='aero'][data-vidrio] .app.esc-raiz { background: transparent; }
+
+/* Marco de vidrio */
+html[data-tema='aero'][data-vidrio] .esc-arriba,
+html[data-tema='aero'][data-vidrio] .esc-abajo,
+html[data-tema='aero'][data-vidrio] .esc-lateral,
+html[data-tema='aero'][data-vidrio] .esc-derecha {
+  background: var(--t-vidrio);
+  border-radius: 8px;
+  box-shadow: var(--t-borde-vidrio);
+  text-shadow: 0 0 6px rgba(0, 0, 0, 0.8), 0 0 2px rgba(0, 0, 0, 0.6);
+}
+/* Contenido: casi opaco, con el mismo borde de vidrio */
+html[data-tema='aero'][data-vidrio] .esc-centro {
+  border-radius: 8px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(255, 255, 255, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+html[data-tema='aero'][data-vidrio] .esc-tabla-cab { background: rgba(16, 21, 30, 0.92); }
+
+/* Botones brillantes (Windows 7): mitad de arriba clara, corte al medio y brillo celeste al pasar el mouse */
+html[data-tema='aero'][data-vidrio] .esc-redondo,
+html[data-tema='aero'][data-vidrio] .esc-flechas button,
+html[data-tema='aero'][data-vidrio] .esc-pill,
+html[data-tema='aero'][data-vidrio] .esc-chips .chip:not(.active),
+html[data-tema='aero'][data-vidrio] .esc-res-chip:not(.on) {
+  background: var(--t-boton);
+  border: 1px solid rgba(0, 0, 0, 0.55);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+  transition: box-shadow 0.15s, background 0.15s;
+}
+html[data-tema='aero'][data-vidrio] .esc-redondo:hover,
+html[data-tema='aero'][data-vidrio] .esc-flechas button:hover:not(:disabled),
+html[data-tema='aero'][data-vidrio] .esc-pill:hover,
+html[data-tema='aero'][data-vidrio] .esc-chips .chip:hover:not(.active):not(:disabled),
+html[data-tema='aero'][data-vidrio] .esc-res-chip:hover:not(.on),
+html[data-tema='aero'][data-vidrio] .esc-lat-btn:hover {
+  background: var(--t-boton-hover);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25), 0 0 7px 2px rgba(93, 196, 240, 0.55);
+}
+html[data-tema='aero'][data-vidrio] .esc-chips .chip.active,
+html[data-tema='aero'][data-vidrio] .esc-res-chip.on {
+  background: var(--t-gel); color: #fff; border: 1px solid #0a2a5c;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+/* Buscador: campo hundido en el vidrio */
+html[data-tema='aero'][data-vidrio] .esc-buscador {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(0, 0, 0, 0.6);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+html[data-tema='aero'][data-vidrio] .esc-buscador:hover,
+html[data-tema='aero'][data-vidrio] .esc-buscador-caja.abierto .esc-buscador {
+  background: rgba(0, 0, 0, 0.45);
+  border-color: #3c7fb1;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5), 0 0 6px 1px rgba(93, 196, 240, 0.45);
+}
+
+/* Minimizar, maximizar y cerrar como en Windows 7: grupo colgando de arriba, cerrar en rojo */
+html[data-tema='aero'][data-vidrio] .esc-ventana {
+  align-self: start; margin-top: -1px; height: 22px;
+  border: 1px solid rgba(0, 0, 0, 0.55); border-top: 0; border-radius: 0 0 6px 6px; overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+html[data-tema='aero'][data-vidrio] .esc-ventana button {
+  width: 30px; color: #fff;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.3) 45%, rgba(0, 0, 0, 0.1) 50%, rgba(0, 0, 0, 0.1) 75%, rgba(255, 255, 255, 0.5));
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.8));
+}
+html[data-tema='aero'][data-vidrio] .esc-ventana button + button { border-left: 1px solid rgba(0, 0, 0, 0.4); }
+html[data-tema='aero'][data-vidrio] .esc-ventana button svg { width: 12px; height: 12px; }
+html[data-tema='aero'][data-vidrio] .esc-ventana button:hover {
+  background: radial-gradient(circle at bottom, #2aceda, transparent 65%), linear-gradient(#b6d9ee 50%, #1a6ca1 50%);
+}
+html[data-tema='aero'][data-vidrio] .esc-ventana button.cerrar { width: 46px; background: linear-gradient(#e0a197e5, #cf796a 25% 50%, #d54f36 50%); }
+html[data-tema='aero'][data-vidrio] .esc-ventana button.cerrar:hover { background: linear-gradient(#fb9d8b, #ee6d56 25% 50%, #d42809 50%); }
+
+/* Filas: celeste translúcido con borde, como las listas de Windows 7 */
+html[data-tema='aero'][data-vidrio] .esc-raiz .track-row:hover,
+html[data-tema='aero'][data-vidrio] .esc-tabla-fila:hover,
+html[data-tema='aero'][data-vidrio] .esc-rapida-fila:hover,
+html[data-tema='aero'][data-vidrio] .esc-res-fila:hover,
+html[data-tema='aero'][data-vidrio] .esc-raiz .sheet-item:hover {
+  background: var(--t-fila-hover); box-shadow: inset 0 0 0 1px rgba(170, 221, 250, 0.35);
+}
+html[data-tema='aero'][data-vidrio] .esc-tabla-fila.elegida,
+html[data-tema='aero'][data-vidrio] .esc-raiz .track-row.elegida,
+html[data-tema='aero'][data-vidrio] .esc-rapida-fila.elegida {
+  background: var(--t-fila-elegida); box-shadow: inset 0 0 0 1px rgba(170, 221, 250, 0.6);
+}
+html[data-tema='aero'][data-vidrio] .esc-rapida-fila { background: rgba(255, 255, 255, 0.04); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06); }
+
+/* Tarjetas de "Para ti": vidrio oscuro en vez de un bloque de color */
+html[data-tema='aero'][data-vidrio] .esc-raiz .lib-card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02) 40%), rgba(20, 26, 36, 0.7) !important;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+/* Menús: vidrio oscuro con borde de Aero */
+html[data-tema='aero'][data-vidrio] .esc-menu,
+html[data-tema='aero'][data-vidrio] .esc-perfil-menu,
+html[data-tema='aero'][data-vidrio] .esc-desplegable,
+html[data-tema='aero'][data-vidrio] .sheet {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 40px), rgba(18, 24, 34, 0.94);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), var(--t-borde-vidrio);
+}
+html[data-tema='aero'][data-vidrio] .esc-menu button:hover:not(:disabled),
+html[data-tema='aero'][data-vidrio] .esc-perfil-menu > button:hover {
+  background: var(--t-fila-hover); box-shadow: inset 0 0 0 1px rgba(170, 221, 250, 0.4);
+}
+
+/* iPhone instalado con la franja de abajo fuera de la página (ver main.tsx): la franja del color de la barra */
+html[data-visor-corto][data-tema] { background: var(--t-panel); }

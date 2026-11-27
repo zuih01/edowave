@@ -1,7 +1,7 @@
 import { getAllPlays, getAllRatings, getAllTracks, getDB } from '../db';
 import { useFijadas } from '../library/fijadas';
 import { useSearchHistory } from '../library/searchHistory';
-import { recargarEq, useEq, useVolumen } from '../player/equalizer';
+import { recargarEq, useEq, useVolumen, volumenDelSistema } from '../player/equalizer';
 import { useLeveler } from '../player/loudness';
 import { colaHooks, usePlayer } from '../player/player';
 import { recargarRack, useRack } from '../player/rack';
@@ -11,7 +11,7 @@ import { cargarEstado, despuesDe, guardarEstado, mandarPendientes, type Busqueda
 
 /**
  * Sincroniza con tu cuenta lo que antes vivía solo en este aparato:
- *  - ajustes (ecualizador, rack, volumen, nivelador, reproducción automática, modo vinilo);
+ *  - ajustes (rack, volumen, nivelador, reproducción automática, modo vinilo);
  *  - búsquedas recientes;
  *  - lo que estaba sonando (la cola) — eso lo lleva player.ts con `colaDelServidor` y `guardarCola`.
  * Al volver a la app (o cada minuto con la app abierta) se trae lo último, así un cambio hecho en la tablet
@@ -42,7 +42,7 @@ const escribir = (k: string, v: string) => {
   }
 };
 
-const AJUSTES: Ajuste[] = [
+const TODOS_AJUSTES: Ajuste[] = [
   {
     clave: 'eq',
     leer: () => ls('eq'),
@@ -100,6 +100,12 @@ const AJUSTES: Ajuste[] = [
     escuchar: (fn) => useFijadas.subscribe(fn),
   },
 ];
+/**
+ * Lo que NO va a la cuenta:
+ *  - el ecualizador: es de cada dispositivo (activarlo en el teléfono no debe activarlo en el PC);
+ *  - en el iPhone, el volumen: es de los botones del teléfono.
+ */
+const AJUSTES = TODOS_AJUSTES.filter((a) => a.clave !== 'eq' && !(volumenDelSistema && a.clave === 'volumen'));
 
 /** Lo último que se sabe que está en el servidor (para no mandar lo mismo de vuelta). */
 const enServidor: Record<string, string> = {};

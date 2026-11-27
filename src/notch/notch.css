@@ -1,0 +1,71 @@
+/* Notch de la app de PC: una píldora negra que cuelga del borde de arriba de la pantalla. Escondida queda una rayita;
+   abierta muestra carátula, título, artista, play/pausa y siguiente. La ventana es transparente: solo se ve la píldora. */
+html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; user-select: none; -webkit-user-select: none; }
+body { font-family: Roboto, 'Segoe UI', system-ui, sans-serif; color: #fff; display: flex; justify-content: center; align-items: flex-start; }
+
+#notch {
+  --acento: #ff4e6a;
+  position: relative;
+  box-sizing: border-box;
+  width: 150px;
+  height: 7px;
+  margin-top: 0;
+  border-radius: 0 0 8px 8px;
+  background: #0b0b0b;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.07), 0 6px 18px rgba(0, 0, 0, 0);
+  overflow: hidden;
+  transition:
+    width 0.42s cubic-bezier(0.2, 1.25, 0.35, 1),
+    height 0.42s cubic-bezier(0.2, 1.25, 0.35, 1),
+    border-radius 0.42s cubic-bezier(0.2, 1, 0.35, 1),
+    box-shadow 0.3s;
+}
+/* La rayita lleva una línea del color de la app abajo, para que se note sin molestar. */
+#notch::after {
+  content: ''; position: absolute; left: 50%; bottom: 1px; width: 36px; height: 2px; border-radius: 2px;
+  transform: translateX(-50%); background: var(--acento); opacity: 0.85; transition: opacity 0.2s;
+}
+#notch.abierto {
+  width: 384px;
+  height: 64px;
+  border-radius: 0 0 24px 24px;
+  /* sombra corta: la ventana deja solo 8 px a los lados y 12 abajo */
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 3px 8px rgba(0, 0, 0, 0.35);
+}
+#notch.abierto::after { opacity: 0; }
+
+.contenido {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 64px; box-sizing: border-box;
+  display: flex; align-items: center; gap: 12px; padding: 0 14px 0 12px;
+  opacity: 0; transform: translateY(-6px) scale(0.96); pointer-events: none;
+  transition: opacity 0.18s, transform 0.3s cubic-bezier(0.2, 1, 0.35, 1);
+}
+#notch.abierto .contenido { opacity: 1; transform: none; pointer-events: auto; transition-delay: 0.1s, 0.06s; }
+
+/* Carátula redonda, como un disco: gira mientras suena */
+.caratula {
+  flex: none; width: 42px; height: 42px; border-radius: 50%; background: #333 center / cover no-repeat; position: relative;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12); cursor: pointer; border: 0; padding: 0;
+  animation: girar 9s linear infinite; animation-play-state: paused;
+}
+.caratula::after { content: ''; position: absolute; inset: 50%; width: 7px; height: 7px; margin: -3.5px; border-radius: 50%; background: #0b0b0b; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18); }
+#notch.sonando .caratula { animation-play-state: running; }
+@keyframes girar { to { transform: rotate(360deg); } }
+
+.texto { flex: 1; min-width: 0; cursor: pointer; }
+.titulo, .artista { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.titulo { font-size: 13.5px; font-weight: 700; line-height: 18px; }
+.artista { font-size: 12px; color: #aaa; line-height: 16px; }
+
+.boton { flex: none; border: 0; padding: 0; display: grid; place-items: center; cursor: pointer; color: #fff; background: transparent; border-radius: 50%; transition: transform 0.12s, background 0.15s, filter 0.15s; }
+.boton:active { transform: scale(0.9); }
+.play { width: 38px; height: 38px; background: color-mix(in srgb, var(--acento) 45%, #fff); color: #1a0a0d; }
+.play:hover { filter: brightness(1.08); }
+.siguiente { width: 34px; height: 34px; }
+.siguiente:hover { background: rgba(255, 255, 255, 0.12); }
+.boton:disabled { opacity: 0.4; cursor: default; }
+
+@media (prefers-reduced-motion: reduce) {
+  #notch, .contenido { transition: none; }
+  .caratula { animation: none; }
+}
